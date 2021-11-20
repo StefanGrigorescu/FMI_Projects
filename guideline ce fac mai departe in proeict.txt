@@ -1,0 +1,6 @@
+In punctul asta, mai am de lucrat la BellmanFord cu sortarea topologica si Tarjan. Am notat in functie ce cauzeaza eroarea de scriere, trebuie acum sa imi dau seama cum o rezolv. 
+Dupa ce o rezolv, pasii sunt urmatorii: aplic, in ordinea topologica, bellmanFord pe subgrafuri, modific vectorul de costuri pt nodurile respective, modific costul nodurilor vecine (aflate in alte ctc) cu nodurile din ctc curent, apoi continui forul. Inca o problema de rationament este ca trb sa imi dau seama cum ma asigur sa pot incepe cu componenta conexa din care face parte nodul sursa cerut de problema bellmanFord, ca sa aiba sens actualizare distantelor fata de acest nod. 
+
+Soluție pt problema de raționament pe care o aveam la super Bellman-Ford: 
+Pornesc din ctc a nodului sursă, al cărei index îl iau în O(1) din array-ul careSubgraf. Restul componentelor nu mă interesează, pt că sunt inaccesibile din nodul sursă (pt că sunt anterioare in sortarea topologică a super grafului, înseamnă că nu am către ele muchii de la ctc a nodului sursă, ori a celor ce o succed). 
+Va trebui să adaug o variabilă nouă în parametrii cadruSortareTopologica sau să caut in O(n) (practic să merg în forul la care am răms și să încep să aplic Bellman-Ford doar după ce am activat un bool amAjunsLaSursa) poziția din cadrul sortării tipologice la care se află ctc a nodului sursă
