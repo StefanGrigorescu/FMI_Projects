@@ -10,6 +10,7 @@
 #include <climits>
 #include <cstdlib>
 #include <cmath>
+//#include <utility>
 
 std::ifstream f("graful.in");
 std::ofstream g("graful.out");
@@ -23,32 +24,44 @@ const int nodgol_int = 0;
 #define tmp_moneda template <typename moneda>
 
 template <typename moneda = int>
+class graf;
+template <typename moneda = int>
+class subgraf;
+
+#pragma region vecin
+template <typename moneda = int>
+class vecin;
+template <typename moneda = int>
+std::ostream& operator<< (std::ostream& out, const vecin<moneda>& vecinul);
+
+template <typename moneda>
 class vecin
 {
 public:
 	int index;  // eticheta sa
-	int cost;	 // costul muchiei catre acest vecin
+	moneda cost;	 // costul muchiei catre acest vecin
 
 	vecin(int idx = 0, moneda costul = 0) : index(idx), cost(costul) {}
-	tmp_moneda
-	friend std::ostream& operator<<(std::ostream& out, const vecin<moneda>& vecinul);
+	friend std::ostream& operator<< <moneda>(std::ostream& out, const vecin<moneda>& vecinul);
 };
-template <typename moneda = int>
-std::ostream& operator<<(std::ostream& out, const vecin<moneda>& vecinul)
+template <typename moneda>
+std::ostream& operator<< (std::ostream& out, const vecin<moneda>& vecinul)
 {
 	out << vecinul.index << " " << vecinul.cost;
 	return out;
 }
+#pragma endregion
 
 #pragma region muchie
-// declar prin antet clasa si doi operatori ce ii vor fi prieteni: 
+// declar prin antet clasa si operatorii ce ii vor fi prieteni: 
 template <typename moneda = int>
 class muchie;
 
-template<typename moneda>
+tmp_moneda
 std::ostream& operator<<(std::ostream& out, const muchie<moneda>& m);
-template<typename moneda>
+tmp_moneda
 std::ofstream& operator<<(std::ofstream& out, const muchie<moneda>& m);
+
 
 template <typename moneda>
 class muchie
@@ -58,11 +71,11 @@ public:
 	int vf2;
 	moneda cost;
 
-	muchie(int varf1 = 0, int varf2 = 0, int costul = 0) : vf1(varf1), vf2(varf2), cost(costul) {}
+	muchie(int varf1 = 0, int varf2 = 0, moneda costul = 0) : vf1(varf1), vf2(varf2), cost(costul) {}
 	muchie(const muchie < moneda >& sursa) : vf1 (sursa.getvf1() ), vf2(sursa.getvf2()), cost(sursa.getcost()) {}
 
 
-	void setAll(int varf1, int varf2, int costul)
+	void setAll(int varf1, int varf2, moneda costul)
 	{
 		vf1 = varf1;
 		vf2 = varf2;
@@ -75,11 +88,11 @@ public:
 		return cost;
 	}
 
-	bool operator == (const muchie& m) const
+	bool operator == (const muchie<moneda> &m) const
 	{
 		return (vf1 == m.getvf1() and vf2 == m.getvf2() and cost == m.cost);
 	}
-	bool operator < (const muchie& m) const
+	bool operator < (const muchie<moneda> &m) const
 	{
 		if (cost < m.getcost())
 			return true;
@@ -92,7 +105,7 @@ public:
 		}
 		return false;
 	}
-	bool operator > (const muchie& m) const
+	bool operator > (const muchie<moneda> &m) const
 	{
 		if (cost > m.getcost())
 			return true;
@@ -105,19 +118,27 @@ public:
 		}
 		return false;
 	}
+	muchie<moneda> operator=(const muchie<moneda>& sursa)
+	{
+		vf1 = sursa.vf1;
+		vf2 = sursa.vf2;
+		cost = sursa.cost;
+		return *this;
+	}
 
-	friend std::ostream& operator<< <>(std::ostream& out, const muchie<moneda>& m);		// aici specific ca operatorii mai sus declarati sunt prieteni
-	friend std::ofstream& operator<< <>(std::ofstream& out, const muchie<moneda>& m);
+	friend std::ostream &operator<< <moneda>(std::ostream &out, const muchie<moneda>& m);		// aici specific ca operatorii mai sus declarati sunt prieteni
+	
+	friend std::ofstream &operator<< <moneda>(std::ofstream &out, const muchie<moneda>& m);
 };
 
-template<typename moneda>			// si aici specific implementarea celor doi operatori
-std::ostream& operator<<(std::ostream& out, const muchie<moneda>& m)
+tmp_moneda			// si aici specific implementarea operatorilor prieten
+std::ostream& operator<< (std::ostream &out, const muchie<moneda> &m)
 {
 	out << m.vf1 << " " << m.vf2 << " " << m.cost;
 	return out;
 }
-template<typename moneda>
-std::ofstream& operator<<(std::ofstream& out, const muchie<moneda>& m)
+tmp_moneda
+std::ofstream& operator<< (std::ofstream &out, const muchie<moneda> &m)
 {
 	out << m.vf1 << " " << m.vf2;
 	return out;
@@ -439,15 +460,17 @@ namespace treap
 typedef std::stack< std::pair <int, int > > stackpair;
 typedef std::unordered_set< int > multime;
 typedef std::vector< std::vector < int > > vector_vectori;
-typedef std::vector < vecin<int> > vector_vecini;
+#define vector_vecini std::vector < vecin<moneda> >
+#define vmuchii std::vector< muchie< moneda> >
 
-template <typename moneda = int>
+template <typename moneda>
 class graf
 {
 protected:
 	const bool orientat;
 	const bool areCosturi;
 	const bool areListaMuchii;
+	bool areMatPonderi;
 
 	int nrvf, nrmuchii;
 	vector_vecini* vecini;
@@ -456,32 +479,35 @@ protected:
 	int size_lista_muchii;
 	bool lista_muchii_sortata;
 
-	void DFS(int nod, bool* viz);
+	void DFS(int nod, bool* viz, int* ordineVizita, int& idxOrdineVizita);
 	void biconexe(int nod, int tata, bool* viz, multime* wayback, stackpair& muchiiviz, vector_vectori& comp_biconexe);
 	void tareconexe(int nod, int& freeorder, int* order, int* leastbackorder, bool* pestiva, std::stack<int>& noduriviz, vector_vectori& comp_tareconexe);
 	void mCrits(int nod, int tata, bool* viz, multime* wayback, stackpair& muchiiviz, vector_vectori& connections, vector_vectori& solutia);
 	void DFS_SortareTopologica(int nod, bool* viz, int*& finished, int& idxfinished);
+	//void bellmanFordPartial(long long int*& costul, std::map<int, moneda> &actualizariCost, bool& areCicluNegativ = false, int nod_sursa = 1);
 
 	graf(int nrvf_param);		// doar pt declararea unor subgrafuri
 public:
-	graf(bool orientat_param = true, bool areCosturi_param = true, bool areListaMuchii_param = true);
+	graf(bool orientat_param = true, bool areCosturi_param = true, bool areListaMuchii_param = true, bool areMatPonderi = false, int nrvf_param = -1, int nrmuchii_param = -1);
 
 	int get_nrvf() { return nrvf; }
 	void copiaza_listeAdiacenta(vector_vectori& solution);
 	void verifvecini();
 
-	void BFS();
-	void cadruDFS();
-	void cadru_biconexe();
-	vector_vectori cadru_tareconexe();
+	int* BFS();
+	int* cadruDFS();
+	vector_vectori cadru_biconexe();
+	vector_vectori cadru_tareconexe(bool statusIsError = false);
 	vector_vectori criticalConnections(int n, vector_vectori& connections);
 	void cadruSortareTopologica(int*& finished, bool statusIsError = false);
 
-	void kruskal();
-	void prim();
-	void dijkstra(int nod = 1);
-	void bellmanFord(int nod_sursa = 1);
-	void TarjanTopologicBellmanFord(int nod_sursa = 1);
+	void kruskal(muchie<moneda> *&muchiiAPM, moneda &cost_apm = 0, bool statusIsError = false);
+	void prim(muchie<moneda> *&muchiiAPM, moneda &cost_apm = 0, bool statusIsError = false);
+	void dijkstra(long long int *&costul, int nod = 1);
+	void bellmanFord(long long int *&costul, bool& areCicluNegativ = false, int nod_sursa = 1);
+	void TarjanTopologicBellmanFord(long long int*& costul, bool& areCicluNegativ = false, int nod_sursa = 1);
+	
+	void royFloyd(long long int**&costuri, bool statusIsError = false);
 
 	~graf()
 	{
@@ -491,69 +517,107 @@ public:
 	}
 };
 
-template <typename moneda = int>
-class subgraf;
-
-
 #pragma region graf & auxiliare
 tmp_moneda
-graf<moneda>::graf(bool orientat_param, bool areCosturi_param, bool areListaMuchii_param) : orientat(orientat_param), areCosturi(areCosturi_param), areListaMuchii(areListaMuchii_param)
+graf<moneda>::graf(bool orientat_param, bool areCosturi_param, bool areListaMuchii_param, bool areMatPonderi_param, int nrvf_param, int nrmuchii_param) : orientat(orientat_param), areCosturi(areCosturi_param), areListaMuchii(areListaMuchii_param), areMatPonderi(areMatPonderi_param), nrvf(nrvf_param), nrmuchii(nrmuchii_param)
 {
-	f >> nrvf >> nrmuchii;
-	if (start)	// daca start este nenul, inseamna ca avem de citit un nod de start...
-		f >> start;
-
-	vecini = new vector_vecini[nrvf + 1];
-	if (areListaMuchii)
+	if (!areMatPonderi)
 	{
-		//if (orientat)
-		size_lista_muchii = nrmuchii;
-		//else
-		// 	size_lista_muchii = 2 * nrmuchii;
+		if(nrvf < 0)
+			f >> nrvf;
+		if(nrmuchii < 0)
+			f >> nrmuchii;
+		if (start)	// daca start este nenul, inseamna ca avem de citit un nod de start...
+			f >> start;
 
-		lista_muchii = new muchie<moneda>[size_lista_muchii];
+		vecini = new vector_vecini[nrvf + 1];
+		if (areListaMuchii)
+		{
+			//if (orientat)
+			size_lista_muchii = nrmuchii;
+			//else
+			// 	size_lista_muchii = 2 * nrmuchii;
+
+			lista_muchii = new muchie<moneda>[size_lista_muchii];
+		}
+		else
+		{
+			size_lista_muchii = 0;
+			lista_muchii = NULL;
+		}
+		lista_muchii_sortata = false;
+
+		int idxListaMuchii = 0;
+		for (int i = 0; i < nrmuchii; i++)
+		{
+			int x, y, c = 0;
+			f >> x >> y;
+			if (areCosturi)
+				f >> c;
+
+			vecin<moneda> aux(y, c);
+			vecini[x].push_back(aux);
+			if (!orientat)
+			{
+				vecin<moneda> aux(x, c);
+				vecini[y].push_back(aux);
+			}
+
+			if (areListaMuchii)
+			{
+				lista_muchii[idxListaMuchii].setAll(x, y, c);
+				idxListaMuchii++;
+				//if (!orientat)
+				//{
+				//	lista_muchii[idxListaMuchii].setAll(y, x, c);
+				//	idxListaMuchii++;
+				//}
+			}
+		}
 	}
 	else
 	{
-		size_lista_muchii = 0;
-		lista_muchii = NULL;
-	}
-	lista_muchii_sortata = false;
-
-	int idxListaMuchii = 0;
-	for (int i = 0; i < nrmuchii; i++)
-	{
-		int x, y, c = 0;
-		f >> x >> y;
-		if (areCosturi)
-			f >> c;
-
-		vecin<moneda> aux(y, c);
-		vecini[x].push_back(aux);
-		if (!orientat)
-		{
-			vecin<moneda> aux(x, c);
-			vecini[y].push_back(aux);
-		}
+		f >> nrvf;
+		nrmuchii = nrvf * nrvf;
 
 		if (areListaMuchii)
 		{
-			lista_muchii[idxListaMuchii].setAll(x, y, c);
-			idxListaMuchii++;
-			//if (!orientat)
-			//{
-			//	lista_muchii[idxListaMuchii].setAll(y, x, c);
-			//	idxListaMuchii++;
-			//}
+			size_lista_muchii = nrmuchii;
+			lista_muchii = new muchie<moneda>[size_lista_muchii];
 		}
+		else
+		{
+			size_lista_muchii = 0;
+			lista_muchii = NULL;
+		}
+		lista_muchii_sortata = false;
+
+		int idxListaMuchii = 0;
+
+		vecini = new vector_vecini[nrvf + 1];
+		for (int i = 1; i <= nrvf; i++)
+			for (int j = 1; j <= nrvf; j++)
+			{
+				moneda cost;
+				f >> cost;
+				vecin<moneda> aux(j, cost);
+				vecini[i].push_back(aux);
+
+				if (areListaMuchii)
+				{
+					lista_muchii[idxListaMuchii].setAll(i, j, cost);
+					idxListaMuchii++;
+				}
+			}
 	}
 }
 tmp_moneda
-graf<moneda>::graf(int nrvf_param) : orientat(true), areCosturi(true), areListaMuchii(false), lista_muchii(NULL), size_lista_muchii(0), lista_muchii_sortata(false)
+graf<moneda>::graf(int nrvf_param) : orientat(true), areCosturi(true), areListaMuchii(false), areMatPonderi(false), lista_muchii(NULL), size_lista_muchii(0), lista_muchii_sortata(false)
 {
 	nrvf = nrvf_param;
 	nrmuchii = 0;		// se va modifica direct in constructorul clasei subgraf
-	vecini = new vector_vecini[nrvf + 1];
+	//vecini = new vector_vecini[nrvf + 1];
+	vecini = NULL;	// vom folosi un map cu liste de adiacenta ca sa ne ocupam de mai putine noduri intr-un subgraf
 }
 
 tmp_moneda
@@ -563,12 +627,12 @@ void graf<moneda>::verifvecini()
 	{
 		std::cout << "\n  vecinii lui " << i << " :  ";
 		for (unsigned int j = 0; j < vecini[i].size(); j++)
-			std::cout << vecini[i][j].index << " ";
+			std::cout << vecini[i][j].index << " (" << vecini[i][j].cost << " $) | ";
 	}
 }
 
 tmp_moneda
-void graf<moneda>::BFS()
+int* graf<moneda>::BFS()
 {
 	int* dist = new int[nrvf + 1]{ 0 };	// initializam distantele cu 0 (le decrementam ulterior)
 	std::queue <int> qBFS;					// coada pt BFS
@@ -592,35 +656,45 @@ void graf<moneda>::BFS()
 	}
 
 	for (int i = 1; i <= nrvf; i++)
-		g << dist[i] - 1 << " ";
+		dist[i]--;
 
-	delete[] dist;
+	return dist;
 }
 
 tmp_moneda
-void graf<moneda>::DFS(int nod, bool* viz)
+void graf<moneda>::DFS(int nod, bool* viz, int* ordineVizita, int &idxOrdineVizita)
 {
 	viz[nod] = true;
+	*(ordineVizita + idxOrdineVizita) = nod;
 	for (unsigned int i = 0; i < vecini[nod].size(); i++)
 	{
 		const int nod_urm = vecini[nod][i].index;
 		if (!viz[nod_urm])
-			DFS(nod_urm, viz);
+		{
+			idxOrdineVizita++;
+			DFS(nod_urm, viz, ordineVizita, idxOrdineVizita);
+		}
+			
 	}
 }
 tmp_moneda
-void graf<moneda>::cadruDFS()
+int* graf<moneda>::cadruDFS()
 {
 	contor = 0;
 	bool* viz = new bool[nrvf + 1]{ 0 };
+	int* ordineVizita = new int[nrvf + 1]{ 0 };
+	int idxOrdineVizita = 0;
+
 	for (int i = 1; i <= nrvf; i++)
 		if (!viz[i])
 		{
 			contor++;
-			DFS(i, viz);
+			idxOrdineVizita++;
+			DFS(i, viz, ordineVizita, idxOrdineVizita);
 		}
-	g << contor;
+	
 	delete[]viz;
+	return ordineVizita;
 }
 
 tmp_moneda
@@ -674,7 +748,7 @@ void graf<moneda>::biconexe(int nod, int tata, bool* viz, multime* wayback, stac
 	}
 }
 tmp_moneda
-void graf<moneda>::cadru_biconexe()
+vector_vectori graf<moneda>::cadru_biconexe()
 {
 	contor = 0;
 	vector_vectori comp_biconexe;		// solutia, de forma unui vector cu alti vectori ce reprezinta componentele biconexe
@@ -682,17 +756,10 @@ void graf<moneda>::cadru_biconexe()
 	stackpair muchiiviz;							// stiva de muchii vizitate
 	multime* setgol = new multime;		// un set "wayback" pe care il pasez fiului pentru a-mi returna caile de intoarcere disponibile
 	biconexe(1, -1, viz, setgol, muchiiviz, comp_biconexe);
+	
 	delete setgol;
 	delete[]viz;
-
-	g << contor << "\n";
-	for (unsigned int i = 0; i < comp_biconexe.size(); i++)
-	{
-		for (unsigned int j = 0; j < comp_biconexe[i].size(); j++) {
-			g << comp_biconexe[i][j] << " ";
-		}
-		g << "\n";
-	}
+	return comp_biconexe;
 }
 
 tmp_moneda
@@ -737,7 +804,7 @@ void graf<moneda>::tareconexe(int nod, int& freeorder, int* order, int* leastbac
 	}
 }
 tmp_moneda
-vector_vectori graf<moneda>::cadru_tareconexe()
+vector_vectori graf<moneda>::cadru_tareconexe(bool statusIsError)
 {
 	vector_vectori comp_tareconexe;				// solutia, de forma unui vector cu alti vectori ce reprezinta componentele tareconexe
 
@@ -747,6 +814,8 @@ vector_vectori graf<moneda>::cadru_tareconexe()
 		g << "\n   Graful dat trebuie sa fie orientat pentru a rezolva aceasta problema";
 		return comp_tareconexe;
 	}
+	std::vector< int > idxZeroRamaneGol;
+	comp_tareconexe.push_back(idxZeroRamaneGol);
 
 	contor = 0;													// nr componente conexe
 	std::stack<int> noduriviz;								// stiva de noduri vizitate
@@ -758,14 +827,6 @@ vector_vectori graf<moneda>::cadru_tareconexe()
 	for (int i = 1; i <= nrvf; i++)
 		if (order[i] == 0)		//  nod nevizitat 
 			tareconexe(i, freeorder, order, leastbackorder, pestiva, noduriviz, comp_tareconexe);
-
-	g << contor << "\n";
-	for (unsigned int i = 0; i < comp_tareconexe.size(); i++)
-	{
-		for (unsigned int j = 0; j < comp_tareconexe[i].size(); j++)
-			g << comp_tareconexe[i][j] << " ";
-		g << "\n";
-	}
 
 	delete[] leastbackorder;
 	delete[] order;
@@ -845,9 +906,9 @@ std::vector< std::vector< int > > graf<moneda>::criticalConnections(int n, vecto
 	stackpair muchiiviz;							// stiva de muchii vizitate
 	multime* setgol = new multime;		// un set "wayback" pe care il pasez fiului pentru a-mi returna caile de intoarcere disponibile
 	mCrits(1, -1, viz, setgol, muchiiviz, connections, solutia);
+	
 	delete setgol;
 	delete[]viz;
-
 	return solutia;
 }
 
@@ -875,14 +936,13 @@ void graf<moneda>::cadruSortareTopologica(int*& finished, bool statusIsError)
 		return;
 	}
 
+	finished = new int[nrvf + 1]{ 0 };
 	bool* viz = new bool[nrvf + 1]{ 0 };
 	int idxfinished = 1;
 	for (int i = 1; i <= nrvf; i++)
 		if (!viz[i])
 			DFS_SortareTopologica(i, viz, finished, idxfinished);
 
-	for (int i = nrvf; i >= 1; i--)
-		g << finished[i] << " ";
 	delete[]viz;
 }
 
@@ -897,12 +957,13 @@ int tataMare(int nod, int tata[])
 	return tata[nod];		// dau inapoi in recursie informatia pe care am primit-o eu despre cine e tataMare in arborele acesta
 }
 tmp_moneda
-void graf<moneda>::kruskal()
+void graf<moneda>::kruskal(muchie<moneda> *&muchiiAPM, moneda &cost_apm, bool statusIsError)
 {
 	if (!areCosturi)
 	{
 		std::cout << "\n   Muchiile din graful dat trebuie sa  pentru a rezolva aceasta problema";
 		g << "\n   Muchiile din graful dat trebuie sa  pentru a rezolva aceasta problema";
+		statusIsError = true;
 		return;
 	}
 	
@@ -911,8 +972,9 @@ void graf<moneda>::kruskal()
 		std::sort(lista_muchii, lista_muchii + size_lista_muchii);
 		lista_muchii_sortata = true;
 	}
-	std::vector<int> indecsii_muchii;
-	int cost_apm = 0;   
+	const int nrMuchiiAPM = nrvf - 1;	
+	muchiiAPM = new muchie<moneda>[nrMuchiiAPM + 1];
+	contor = 0;												// pt muchiile aflate curent in APM
 
 	//construim un vector de tati in care, pt eficienta, tatal fiecarui nod va fi initializat cu zero.
 	int* tata = new int[nrvf + 1]{ 0 };
@@ -925,8 +987,12 @@ void graf<moneda>::kruskal()
 		if (tataMare1 != tataMare2)
 		{
 			// avem o muchie buna
-			indecsii_muchii.push_back(i);
-			cost_apm += lista_muchii[i].cost;
+			contor++;
+			muchiiAPM[ contor ] = lista_muchii[i];
+			cost_apm += muchiiAPM[ contor ].cost;
+
+			if (contor == nrMuchiiAPM)		// am gasit toate muchiile necesare
+				break;
 
 			const int h1 = h_subarbore[tataMare1];
 			const int h2 = h_subarbore[tataMare2];
@@ -943,14 +1009,136 @@ void graf<moneda>::kruskal()
 	}
 	delete[]tata;
 	delete[]h_subarbore;
-
-	g << cost_apm << "\n" << nrvf - 1;	// cost si nr muchii APM 
-	for (unsigned int i = 0; i < indecsii_muchii.size(); i++)
-		g << "\n" << lista_muchii[ indecsii_muchii[i] ];
 }
 
 tmp_moneda
-void graf<moneda>::prim()
+void graf<moneda>::prim(muchie<moneda>*& muchiiAPM, moneda &cost_apm, bool statusIsError)
+{
+	if (!areCosturi)
+	{
+		std::cout << "\n   Muchiile din graful dat trebuie sa  pentru a rezolva aceasta problema";
+		g << "\n   Muchiile din graful dat trebuie sa  pentru a rezolva aceasta problema";
+		statusIsError = true;
+		return;
+	}
+
+	typedef muchie< moneda > muchie_m;
+	
+	const int nrMuchiiAPM = nrvf - 1;
+	muchiiAPM = new muchie_m[nrMuchiiAPM + 1];
+	cost_apm = 0;
+	contor = 0;																// pt muchiile aflate curent in APM
+
+	if (!orientat)
+	{
+		std::priority_queue< muchie_m, vmuchii, std::greater< muchie_m > > muchii_de_verif;		// folosim pq pt a accesa minimul in O(1)
+
+		bool* noduri_selectate = new bool[nrvf + 1]{ 0 };		// aici vrem doar verificare de true in O(1)
+		int nr_noduri_selectate = 1;
+		int nod = 1;
+		noduri_selectate[nod] = true;
+
+		while (contor < nrMuchiiAPM)
+		{
+			for (unsigned int i = 0; i < vecini[nod].size(); i++)
+			{
+				muchie_m aux(nod, vecini[nod][i].index, vecini[nod][i].cost);
+				if (!noduri_selectate[aux.vf2])		// daca aux.vf2 nu este printre nodurile selectate deja
+					muchii_de_verif.push(aux);				// luam pt verificare muchia adiacenta lui nod
+			}
+
+			while (!muchii_de_verif.empty() and noduri_selectate[muchii_de_verif.top().vf2])		// cat timp muchia de cost minim disponibila duce la un nod deja selectat
+				muchii_de_verif.pop();																									// scoatem muchia din set
+
+			if (muchii_de_verif.empty())
+			{
+				std::cout << "\n Graful nu este conex!";
+				statusIsError = true;
+				break;
+			}
+
+			const muchie_m muchia = muchii_de_verif.top();					// muchia pe care o vom selecta
+			muchii_de_verif.pop();															// scoatem muchia din verificare
+			contor++;																				// crestem nr muchiilor din APM
+			muchiiAPM[contor] = muchia;
+			cost_apm += muchia.cost;
+
+			nod = muchia.vf2;																	// nod = primul nod neselectat
+			noduri_selectate[nod] = true;												// selectam si noul nod
+			nr_noduri_selectate++;														// si il numaram la noduri selectate
+		}
+		delete[]noduri_selectate;
+	}
+	else
+	{
+		int nod = 1;
+		long long int* costul = new long long int[nrvf + 1];
+		for (int i = 1; i <= nrvf; i++)
+			costul[i] = LLONG_MAX - 1 - (rand() % RAND_MAX);
+		costul[nod] = 0;
+		int* tata = new int[nrvf + 1]{ 0 };
+
+		using treap::R;
+		using treap::nodgol;
+		R = nodgol = new treap::nod<int, long long int >(0, LLONG_MAX, NULL, NULL);
+		for (int cheie = 1; cheie <= nrvf; cheie++)
+			treap::inserare(R, cheie, costul[cheie], true);
+
+		bool* vizitat = new bool[nrvf + 1]{ 0 };
+		vizitat[nod] = true;
+		while (R != nodgol)
+		{
+			nod = R->key;									// nodul cu costul actual minim
+			if (!vizitat[nod])
+				break;
+			treap::stergere(R, R->key, true);		// stergem din treap acest nod selectat
+			for (unsigned int i = 0; i < vecini[nod].size(); i++)
+			{
+				const vecin<moneda> vecinul = vecini[nod][i];
+				const long long int cost_pretendent = vecinul.cost;
+				if (cost_pretendent < costul[vecinul.index])										// am gasit o muchie de cost mai mic catre vecinul.index
+				{
+					vizitat[vecinul.index] = true;
+					costul[vecinul.index] = cost_pretendent;
+					tata[vecinul.index] = nod;
+					treap::stergere(R, vecinul.index, true);										// stergem varianta veche a nodului din treap
+					treap::inserare(R, vecinul.index, costul[vecinul.index], true);		// si il inseram iarasi, updatat cu noul cost
+				}
+			}
+		}
+
+		for (int i = 1; i <= nrvf; i++)
+		{
+			if (!vizitat[i])
+			{
+				std::cout << "\n Graful nu este conex!";
+				statusIsError = true;
+				treap::dezaloca(R);		// eliberam memoria
+				delete nodgol;
+				delete[] vizitat;
+				delete[] tata;
+				delete[]costul;
+				return;
+			}
+			if (tata[i])
+			{
+				muchie<moneda> aux(tata[i], i, costul[i]);											// muchie<moneda> aux ( nodul din care il accesez pe i in APM,  i  , costul muchiei catre i  );
+				contor++;
+				muchiiAPM[contor] = aux;
+				cost_apm += costul[i];
+			}
+		}
+
+		treap::dezaloca(R);		// eliberam memoria
+		delete nodgol;
+		delete[] vizitat;
+		delete[] tata;
+		delete[]costul;
+	}
+}
+
+tmp_moneda
+void graf<moneda>::dijkstra(long long int *&costul, int nod)
 {
 	if (!areCosturi)
 	{
@@ -959,78 +1147,23 @@ void graf<moneda>::prim()
 		return;
 	}
 
-	typedef muchie< moneda > muchie;
-	typedef std::vector< muchie > vmuchii;
+	typedef muchie< moneda > muchie_m;
 
-	std::priority_queue< muchie, vmuchii, std::greater< muchie > > muchii_de_verif;		// folosim pq pt a accesa minimul in O(1)
-	vmuchii solutia;																											// aici vrem inserare in O(1) si cam atat
-	bool* noduri_selectate = new bool[nrvf + 1] { 0 };														// aici vrem doar verificare de true in O(1)
-	int nod = 1;
-	noduri_selectate[ nod ] = true;
-	contor = 1;										// avem un nod selectat
-	int cost_apm = 0;
-
-	while (contor < nrvf)
-	{
-		for (unsigned int i = 0; i < vecini[nod].size(); i++)
-		{
-			muchie aux(nod, vecini[nod][i].index, vecini[nod][i].cost);
-			if ( ! noduri_selectate[ aux.vf2 ] )		// daca aux.vf2 nu este printre nodurile selectate deja
-				muchii_de_verif.push(aux);				// luam pt verificare muchia adiacenta lui nod
-		}
-
-		while (!muchii_de_verif.empty() and noduri_selectate[ muchii_de_verif.top().vf2 ] )		// cat timp muchia de cost minim disponibila duce la un nod deja selectat
-			muchii_de_verif.pop();																									// scoatem muchia din set
-
-		if (muchii_de_verif.empty())
-		{
-			std::cout << "\n Graful nu este conex!";
-			break;
-		}
-
-		const muchie muchia = muchii_de_verif.top();		// muchia pe care o vom selecta
-		nod = muchia.vf2;																	// nod = primul nod neselectat
-		solutia.push_back(muchia);													// salvam muchia in solutie
-		cost_apm += muchia.cost;
-		muchii_de_verif.pop();															// scoatem muchia din verificare
-		noduri_selectate[ nod ] = true;												// selectam si noul nod
-		contor++;																				// si il numaram la noduri selectate
-	}
-
-	g << cost_apm << "\n" << --contor << "\n";
-	for (unsigned int i = 0; i < solutia.size(); i++)
-		g << solutia[i] << "\n";
-}
-
-tmp_moneda
-void graf<moneda>::dijkstra(int nod)
-{
-	if (!areCosturi)
-	{
-		std::cout << "\n   Muchiile din graful dat trebuie sa  pentru a rezolva aceasta problema";
-		g << "\n   Muchiile din graful dat trebuie sa  pentru a rezolva aceasta problema";
-		return;
-	}
-
-	typedef muchie< moneda > muchie;
-	typedef std::vector< muchie > vmuchii;
-
-	long long int* costul;
 	bool* vizitat = new bool[nrvf + 1]{ 0 };
-	contor = 1;										// avem un nod selectat
 	
 	if (!orientat)
 	{
-		costul = new long long int[nrvf + 1]{ 0 };																	// aici vrem inserare si accesare in O(1) si cam atat
-		std::priority_queue< muchie, vmuchii, std::greater< muchie > > muchii_de_verif;		// folosim pq pt a accesa minimul in O(1)
-		bool* noduri_selectate = new bool[nrvf + 1]{ 0 };														// aici vrem doar verificare de true in O(1)
+		costul = new long long int[nrvf + 1]{ 0 };																			// aici vrem inserare si accesare in O(1) si cam atat
+		std::priority_queue< muchie_m, vmuchii, std::greater< muchie_m > > muchii_de_verif;	// folosim pq pt a accesa minimul in O(1)
+		bool* noduri_selectate = new bool[nrvf + 1]{ 0 };																// aici vrem doar verificare de true in O(1)
 		noduri_selectate[nod] = true;
+		contor = 1;												// avem un nod selectat
 
 		while (contor < nrvf)
 		{
 			for (unsigned int i = 0; i < vecini[nod].size(); i++)
 			{
-				muchie aux(nod, vecini[nod][i].index, vecini[nod][i].cost);
+				muchie_m aux(nod, vecini[nod][i].index, vecini[nod][i].cost);
 				if (!noduri_selectate[aux.vf2])			// daca aux.vf2 nu este printre nodurile selectate deja
 					muchii_de_verif.push(aux);			// luam pt verificare muchia adiacenta lui nod
 			}
@@ -1044,13 +1177,14 @@ void graf<moneda>::dijkstra(int nod)
 				break;
 			}
 
-			const muchie muchia = muchii_de_verif.top();							// muchia pe care o vom selecta
+			const muchie_m muchia = muchii_de_verif.top();						// muchia pe care o vom selecta
 			costul[muchia.vf2] = costul[muchia.vf1] + muchia.cost;				// salvam muchia in solutie
 			nod = muchia.vf2;																		// nod = primul nod neselectat
 			muchii_de_verif.pop();																// scoatem muchia din verificare
 			noduri_selectate[nod] = true;													// selectam si noul nod
 			contor++;																					// si il numaram la noduri selectate
 		}
+		delete[] noduri_selectate;
 	}
 	else
 	{
@@ -1075,7 +1209,7 @@ void graf<moneda>::dijkstra(int nod)
 			treap::stergere(R, R->key, true);		// stergem din treap acest nod selectat
 			for (unsigned int i = 0; i < vecini[nod].size(); i++)
 			{
-				const vecin vecinul = vecini[nod][i];
+				const vecin<moneda> vecinul = vecini[nod][i];
 				const long long int cost_pretendent = costul[nod] + vecinul.cost;
 				if (cost_pretendent < costul[vecinul.index])
 				{
@@ -1093,25 +1227,22 @@ void graf<moneda>::dijkstra(int nod)
 		//delete[] tata;
 	}
 
-	for (int i = 2; i <= nrvf; i++)
-	{
-		if(vizitat[i])
-			g << costul[i] << " ";
-		else 
-			g << "0 ";
-	}
+	for (int i = 1; i <= nrvf; i++)
+		if (!vizitat[i])
+			costul[i] = 0;
+
 	delete[] vizitat;
-	delete[]costul;
 }
 
 tmp_moneda
-void graf<moneda>::bellmanFord(int nod_sursa)
+void graf<moneda>::bellmanFord(long long int *&costul, bool& areCicluNegativ, int nod_sursa)
 {
 	const long long int maximul = 922337203685477580;
-	long long int *costul = new long long int[nrvf + 1];
+	costul = new long long int[nrvf + 1];
 	for (int i = 1; i <= nrvf; i++)
 		costul[i] = maximul;
 	costul[nod_sursa] = 0;
+
 	std::queue<int> qnodes;
 	qnodes.push(nod_sursa);
 	bool* inCoada = new bool[nrvf + 1]{0}; 
@@ -1126,7 +1257,7 @@ void graf<moneda>::bellmanFord(int nod_sursa)
 		for (unsigned int j = 0; j < vecini[nod].size(); j++)
 		{
 			const int vecinul = vecini[nod][j].index;
-			const int cost_arc = vecini[nod][j].cost;
+			const moneda cost_arc = vecini[nod][j].cost;
 
 			if ( costul[nod] < maximul and costul[vecinul] > costul[nod] + cost_arc)
 			{
@@ -1149,89 +1280,64 @@ void graf<moneda>::bellmanFord(int nod_sursa)
 		}
 	}
 
-	for (int i = 2; i <= nrvf; i++)
-		g << costul[i] << " ";
 	delete[]nrRelaxari;
 	delete[] inCoada;
-	delete[] costul;
 }
 
 tmp_moneda
-void graf<moneda>::TarjanTopologicBellmanFord(int nod_sursa)
+void setToMax(moneda &inf)
 {
-	if (!areCosturi or !orientat)
+	inf = std::numeric_limits<moneda>::max();
+
+	int aux;
+	long int aux1;
+	short int aux2;
+
+	unsigned int aux3;
+	unsigned short int aux4;
+	unsigned long int aux5;
+	
+	if (typeid(inf) == typeid(aux) or typeid(inf) == typeid(aux1) or typeid(inf) == typeid(aux2))
+	{
+		static_cast<long long int>(inf);
+		inf = LLONG_MAX;
+	}
+	else if (typeid(inf) == typeid(aux3) or typeid(inf) == typeid(aux4) or typeid(inf) == typeid(aux5))
+	{
+		static_cast<unsigned long long int>(inf);
+		inf = ULLONG_MAX;
+	}
+	std::cout << "\n inf a fost setat la valoarea de " << inf;
+}
+tmp_moneda
+void graf<moneda>::royFloyd(long long int**& costuri, bool statusIsError)
+{
+	if (!orientat or !areCosturi)
 	{
 		std::cout << "\n   Muchiile din graful dat trebuie sa aiba cost si graful trebuie sa fie orientat pentru a rezolva aceasta problema astfel!";
 		g << "\n   Muchiile din graful dat trebuie sa aiba cost si graful trebuie sa fie orientat pentru a rezolva aceasta problema astfel!";
+		statusIsError = true;
 		return;
 	}
 
-	typedef muchie< moneda > muchie;
-	typedef std::vector< muchie > vmuchii;		// pt grafuri orientate se numesc arce, dar vom folosi tot termenul "muchii" pt consistenta
+	costuri = new long long int* [nrvf + 1];
 
-	// Obs: vom folosi echivalent termenii de subgraf si componenta tare conexa (ctc)
-	vector_vectori subgrafuri = cadru_tareconexe();		// vector de vectori ce reprezinta nodurile componentelor tare conexe (ctc)
-	int* careSubgraf = new int[nrvf + 1];							// array ce ne spune despre fiecare nod in care ctc este situat
-	const size_t nr_subgrafuri = subgrafuri.size();			// nr ctc
-
-	for (size_t i = 0; i < nr_subgrafuri; i++)						// i reprezinta ctc
-		for (size_t j = 0; j < subgrafuri[i].size(); j++)			// al j-lea nod din ctc curenta
-			careSubgraf[subgrafuri[i][j]] = i + 1;					// o sa indexam ctc-urile tot de la 1, cum avem mai toate grafurile indexate in program							
-	
-	// supergraful va avea ctc drept noduri si "muchii virtuale" drept muchii (provin din muchiile nodurilor din ctc diferite)
-	vmuchii muchii_supergraf;															// muchiile virtuale din supergraf
-	vmuchii* muchiiInterCTC = new vmuchii[nr_subgrafuri +1];			// muchiile reale din graful initial, ale nodurilor din ctc diferite
-	vmuchii *muchii_subgrafuri = new vmuchii[nr_subgrafuri + 1];		// muchiile dintre nodurile aflate in aceeasi ctc
-
-	for (size_t i = 1; i <= nr_subgrafuri; i++)										// i va fi index pentru muchii_supergraf si muchii_subgrafuri
+	for (int i = 1; i <= nrvf; i++)
 	{
-		const int idx_subgrafuri = i - 1;												// in vectorul subgrafuri, vectorii sunt indexati incepand de la 0
-		for (size_t j = 0; j < subgrafuri[idx_subgrafuri].size(); j++)						
-		{
-			const int nod = subgrafuri[idx_subgrafuri][j];						// al j-lea nod din ctc i 
-			for (size_t k = 0; k < vecini[nod].size(); k++)							// vecinii acestui nod
-			{
-				const vecin<moneda> vecinul = vecini[nod][k];
-				const int sugbraf_vecinul = careSubgraf[vecinul.index];	// ctc a acestui vecin
-				if (sugbraf_vecinul == i)													// daca nod si vecin sunt in aceeasi ctc
-				{
-					muchie aux(nod, vecinul.index, vecinul.cost);
-					(muchii_subgrafuri[i]).push_back(aux);						// adaugam muchia la muchiile ctc i
-				}
-				else																					// daca nod si vecin sunt din alte ctc
-				{
-					muchie aux(i, sugbraf_vecinul, vecinul.cost);		
-					muchii_supergraf.push_back(aux);								// adaugam muchia la muchiile dintre ctc-urile lui nod si vecin
-					
-					muchie punteInterCTC(nod, vecinul.index, vecinul.cost);
-					muchiiInterCTC[i].push_back(punteInterCTC);			// retinem vecinii din alte ctc-uri pentru fiecare nod al grafului initial
-				}
-			}
-		}
+		costuri[i] = new long long int[nrvf + 1];
+		for (size_t j = 0; j < vecini[i].size(); j++)
+			costuri[i][j + 1] = vecini[i][j].cost;
+		costuri[i][i] = 0;
 	}
 
-	// vom construi un supergraf cu ctc pe post de noduri 
-	// si subgrafurile ce contin doar nodurile si muchiile din acelasi ctc
-	subgraf<moneda> supergraf(nr_subgrafuri, muchii_supergraf);
-	
-	int* v_ordineTopologica = new int[supergraf.get_nrvf() + 1] { 0 };	// intai sortam topologic supergraful
-	supergraf.cadruSortareTopologica(v_ordineTopologica);
-	for (int i = supergraf.get_nrvf(); i >= 1; i--)
-	{
-		const int idx_subgraf = v_ordineTopologica[i];
-		const int nr_noduri_subgraf = subgrafuri[idx_subgraf - 1].size();		// folosim idx-1 aici pt ca array-ul subgrafuri este indexat de la zero 
-		subgraf<moneda> subgraf_crt(nr_noduri_subgraf, muchii_subgrafuri[idx_subgraf]);
-		// la constructorul celui de-al doilea subgraf, in ultimul for, ultima instructiune genereaza o eroare de scriere
-		// trebuie sa repar acolo
-		subgraf_crt.bellmanFord();
-	}
-		
-
-	// inca in lucru
-	delete[]v_ordineTopologica;
-	delete []muchiiInterCTC;
-	delete []muchii_subgrafuri;
-	delete []careSubgraf;
+	for (int k = 1; k <= nrvf; k++)
+		for (int i = 1; i <= nrvf; i++)
+			for (int j = 1; j <= nrvf; j++)
+				if ( i != j  and ((costuri[i][j] == 0 or costuri[i][j] > costuri[i][k] + costuri[k][j]) and costuri[i][k] != 0 and costuri[k][j] != 0))
+				{
+					costuri[i][j] = costuri[i][k] + costuri[k][j];
+					//std::cout << "costuri["<<i<<"]["<<j<<"] a fost actualizat la " << costuri[i][j] << "\n";
+				}
 }
 
 bool havelHakimi()
@@ -1394,80 +1500,479 @@ void kruskal_paduri()
 template <typename moneda>
 class subgraf : public graf<moneda>
 {
-	typedef std::vector< muchie<moneda> > vmuchii;
+	std::map<int, vector_vecini > listeVecini;
 public:
-	subgraf(int nrvf_param, vmuchii vector_muchii): graf<moneda>(nrvf_param)
+
+	subgraf(const int &nrvf_param, const std::vector<int> &vector_noduri,const vmuchii &vector_muchii): graf<moneda>(nrvf_param)
 	{
-		// Obs: indexarea nodurilor incepe de la zero in supergraf si subgrafurile pt ctc
+		// Obs: indexarea nodurilor incepe de la 1 (nodul 0 este ignorat)
 		// initializarea membrilor:
 		graf<moneda>::nrmuchii = vector_muchii.size();
 		const int nrmuchii = graf<moneda>::nrmuchii, nrvf = graf<moneda>::nrvf;
-
+		
 		for (int i = 0; i < nrmuchii; i++)
 		{
-			vecin<moneda> aux(vector_muchii[i].vf2, vector_muchii[i].cost);		// vecin pt nodul i, cu indexul si costul din vector_muchii[i]
-			std::cout << vector_muchii[i] << " } ";
-			graf<moneda>::vecini[i].push_back(aux);
+			const int nod = vector_muchii[i].vf1;
+			vecin<moneda> aux( vector_muchii[i].vf2, vector_muchii[i].cost );		// vecin pt nod, cu indexul si costul din vector_muchii[i]
+			//graf<moneda>::vecini[nod].push_back(aux);
+			if (listeVecini.find(nod) == listeVecini.end())
+			{
+				vector_vecini listaVecini;
+				listeVecini.insert(std::pair<int, vector_vecini>( nod, listaVecini ));
+			}
+			listeVecini[nod].push_back(aux);
 		}
-		std::cout << " |\n";
-		/*for (int i = 0; i < nrvf; i++)
-		{
-			for (size_t j = 0; j < graf<moneda>::vecini[i].size(); j++)
-				std::cout << graf<moneda>::vecini[i][j] << " | ";
-			std::cout << "\n";
-		}*/
+		//for (auto i = listeVecini.begin; i != listeVecini.end(); i++)
+		//{
+		//	std::cout << " vecini lui i : ";
+		//	for (int j = 0; j <= listeVecini[i].size; j++)
+		//		std::cout << listeVecini[i][j].index << " (" << listeVecini[i][j].cost << ")  | ";
+		//	std::cout << "\n";
+		//}
+
+		/*std::cout << "vecinii lui 0 sunt: ";
+		for (int j = 0; j < graf<moneda>::vecini[0].size(); j++)
+			std::cout << graf<moneda>::vecini[0][j] << " | ";
+		std::cout << " \n";
+		graf<moneda>::verifvecini();
+		std::cout << "\n";*/
 	}
+
+	void bellmanFordPartial(std::map<int, moneda>& actualizariCost, bool& areCicluNegativ = false, int nod_sursa = 1);
 };
+tmp_moneda
+void subgraf<moneda>::bellmanFordPartial(/*long long int*& costul, */std::map<int, moneda>& actualizariCost, bool& areCicluNegativ, int nod_sursa)
+{
+	const long long int maximul = 922337203685477580;
+	//costul = new long long int[nrvf + 1];
+	//for (int i = 1; i <= nrvf; i++)
+		//costul[i] = maximul;
+	actualizariCost.insert(std::pair<int, moneda>(nod_sursa, 0));
+	//costul[nod_sursa] = 0;
+
+	std::queue<int> qnodes;
+	qnodes.push(nod_sursa);
+	//bool* inCoada = new bool[nrvf + 1]{ 0 };
+	std::map<int, bool> inCoada;
+	inCoada.insert(std::pair<int, bool>(nod_sursa, true));
+	inCoada[nod_sursa] = true;
+	//int* nrRelaxari = new int[nrvf + 1]{ 0 };
+	std::map<int, int> nrRelaxari;
+
+	while (!qnodes.empty())
+	{
+		const int nod = qnodes.front();
+		qnodes.pop();
+		inCoada[nod] = false;
+		for (size_t j = 0; j < listeVecini[nod].size(); j++)
+			//unsigned int j = 0; j < vecini[nod].size(); j++)
+		{
+			const int vecinul = listeVecini[nod][j].index;
+			const moneda cost_arc = listeVecini[nod][j].cost;
+
+			if (actualizariCost.find(vecinul) == actualizariCost.end())
+				actualizariCost.insert(std::pair<int, moneda>(vecinul, maximul));
+			int costNod = actualizariCost[nod], costVecinul = actualizariCost[vecinul];
+
+			if (costNod < maximul and costVecinul > costNod + cost_arc)
+			{
+				if (nrRelaxari.find(vecinul) == nrRelaxari.end())
+					nrRelaxari.insert(std::pair<int, int>(vecinul, 1));
+				else
+					nrRelaxari[vecinul]++;
+				if (vecinul == nod_sursa or nrRelaxari[vecinul] >= graf<moneda>::nrvf)
+				{
+					areCicluNegativ = true;
+					g << "Ciclu negativ!";
+					std::cout << "Ciclu negativ!\n";
+					//delete[]nrRelaxari;
+					//delete[] inCoada;
+					//delete[] costul;
+					return;
+				}
+				if (inCoada.find(vecinul) == inCoada.end())
+				{
+					qnodes.push(vecinul);
+					inCoada.insert(std::pair<int, bool>(vecinul, true));
+					//inCoada[vecinul] = true;
+				}
+				else if (!inCoada[vecinul])
+				{
+					qnodes.push(vecinul);
+					inCoada[vecinul] = true;
+				}
+				actualizariCost[vecinul] = costNod + cost_arc;
+				//costul[vecinul] = costul[nod] + cost_arc;
+
+				//if (actualizariCost.find(vecinul) != actualizariCost.end())   // daca am inregistrat deja o actualizare, acum o modificam doar
+				//	actualizariCost[vecinul] = costul[vecinul];
+				//else
+				//	actualizariCost.insert(std::pair< int, moneda >(vecinul, costul[vecinul]));
+			}
+		}
+	}
+
+	//delete[]nrRelaxari;
+	//delete[] inCoada;
+}
+
+tmp_moneda
+void graf<moneda>::TarjanTopologicBellmanFord(long long int*& costul, bool& areCicluNegativ, int nod_sursa)
+{
+	if (!areCosturi or !orientat)
+	{
+		std::cout << "\n   Muchiile din graful dat trebuie sa aiba cost si graful trebuie sa fie orientat pentru a rezolva aceasta problema astfel!";
+		g << "\n   Muchiile din graful dat trebuie sa aiba cost si graful trebuie sa fie orientat pentru a rezolva aceasta problema astfel!";
+		return;
+	}
+
+	typedef muchie< moneda > muchie_m;
+	// pt grafuri orientate se numesc arce, dar vom folosi tot termenul "muchii" pt consistenta
+
+	vector_vectori vCTC = cadru_tareconexe();	     // vector de vectori ce reprezinta nodurile componentelor tare conexe (CTC)
+	int* careCTC = new int[nrvf + 1];                       // array ce ne spune despre fiecare nod in care CTC este situat
+	const size_t nrCTC = vCTC.size() - 1;				 // CTC cu indexul 0 nu se ia in considerare, este goala
+
+	for (size_t i = 1; i <= nrCTC; i++)                       // i reprezinta CTC
+		for (size_t j = 0; j < vCTC[i].size(); j++)        // al j-lea nod din CTC curenta
+			careCTC[vCTC[i][j]] = i;                          // o sa indexam CTC-urile tot de la 1, cum avem mai toate grafurile indexate in program							
+
+	// supergraful va avea CTC drept noduri si "muchii virtuale" drept muchii (provin din muchiile nodurilor din CTC diferite)
+	vmuchii muchiiSupergraf;                                         // muchiile virtuale din supergraf
+	vmuchii* muchiiInterCTC = new vmuchii[nrCTC + 1]; // muchiile reale din graful initial, ale nodurilor din CTC diferite
+	vmuchii* muchiiCTC = new vmuchii[nrCTC + 1];          // muchiile dintre nodurile aflate in aceeasi CTC
+
+	for (size_t i = 1; i <= nrCTC; i++)                                // i va fi index pentru CTC
+	{
+		for (size_t j = 0; j < vCTC[i].size(); j++)
+		{
+			const int nod = vCTC[i][j];                                            // al j-lea nod din CTC i 
+			for (size_t k = 0; k < vecini[nod].size(); k++)                 // vecinii acestui nod
+			{
+				const vecin<moneda> vecinul = vecini[nod][k];
+				const int CTCvecinului = careCTC[vecinul.index];      // CTC a acestui vecin
+				if (CTCvecinului == i)	                                                 // daca nod si vecinul sunt in aceeasi CTC
+				{
+					muchie_m aux(nod, vecinul.index, vecinul.cost);
+					(muchiiCTC[i]).push_back(aux);                             // adaugam muchia la muchiile CTC i
+				}
+				else                                                                           // daca nod si vecinul sunt din CTC diferite
+				{
+					muchie_m aux(i, CTCvecinului, vecinul.cost);
+					muchiiSupergraf.push_back(aux);                         // adaugam muchia la muchiile dintre CTC-urile lui nod si vecinul
+
+					muchie_m punteInterCTC(nod, vecinul.index, vecinul.cost);
+					muchiiInterCTC[i].push_back(punteInterCTC);     // retinem vecinii din alte CTC-uri pentru fiecare nod al grafului initial
+				}
+			}
+		}
+	}
+	// putem pregati de acum array-ul de costuri
+	const long long int maximul = 922337203685477580;
+	costul = new long long int[nrvf + 1];
+	for (int i = 1; i <= nrvf; i++)
+		costul[i] = maximul;
+	costul[nod_sursa] = 0;
+
+	//for (size_t i = 1; i <= nrCTC; i++)
+	//{
+	//	std::cout << "CTC " << i << ": ";
+	//	for (size_t j = 0; j < vCTC[i].size(); j++)
+	//		std::cout << vCTC[i][j] << "  ";
+	//	std::cout << "\n";
+	//}
+	//std::cout << "\n--------1--------\n";
+	//for (int i = 1; i <= nrCTC; i++)
+	//{
+	//	std::cout << "CTC " << i << ": ";
+	//	for (int j = 0; j < muchiiCTC[i].size(); j++)
+	//		std::cout << muchiiCTC[i][j] << " | ";
+	//	std::cout << " }\n";
+	//}
+	//std::cout << "\n--------2--------\n";
+	//std::cout << "supergraf: ";
+	//for (int j = 0; j < muchiiSupergraf.size(); j++)
+	//	std::cout << muchiiSupergraf[j] << " | ";
+	//std::cout << " }\n";
+	//std::cout << "\n--------3--------\n";
+	// vom construi un supergraf (mai exact multigraf) cu CTC pe post de noduri 
+	// si CTC-urile ce contin doar muchiile din acelasi CTC (vor memora toate nodurile pt a pastra indexarea, dar cele fara muchii nu conteaza)
+
+	std::vector<int> vfSupergraf;
+	for (size_t i = 0; i <= nrCTC; i++)
+		vfSupergraf.push_back(i);
+	
+	subgraf<moneda> supergraf(nrCTC + 1, vfSupergraf, muchiiSupergraf);
+
+	int* vOrdineTopologica = new int[nrCTC + 1]{ 0 };          // intai sortam topologic supergraful
+	supergraf.cadruSortareTopologica(vOrdineTopologica);
+
+	bool vizitatCTC_nod_sursa = false;
+	int nod_sursa_local;
+	for (size_t i = nrCTC; i >= 1; i--)                    // parcurgem vectorul sortat topologic invers pt a incepe cu CTC-urile fara restrictii topologice
+	{
+		nod_sursa_local = 0;
+		const int idxCTC = vOrdineTopologica[i];
+		if (idxCTC == careCTC[nod_sursa])
+		{
+			vizitatCTC_nod_sursa = true;
+			nod_sursa_local = nod_sursa;                // pana nu se seteaza acest bool, nu vom prelucra CTC-urile in cauza (inaccesibile din nod_sursa)
+		}
+		if (vizitatCTC_nod_sursa)
+		{
+			const int nrVfCTC = 1 + vCTC[idxCTC].size();
+			subgraf<moneda> CTC_crt(nrVfCTC, vCTC[idxCTC], muchiiCTC[idxCTC]);
+
+			//long long int* costul_CTC_crt = NULL;  // folosim alt array de cost pentru a nu se suprascrie mereu cu LLONG_MAX
+			std::map<int, moneda> actualizariCost;
+			CTC_crt.bellmanFordPartial(/*costul_CTC_crt, */actualizariCost, areCicluNegativ, nod_sursa_local);   // folosim acelasi bool
+			//if (costul_CTC_crt)
+			//{
+			if (!areCicluNegativ)
+			{
+				for (auto it = actualizariCost.begin(); it != actualizariCost.end(); it++)
+				{
+					const int nod_actualizat = it->first;
+					const moneda cost_actualizat = it->second;
+					if (costul[nod_actualizat] > cost_actualizat)
+						costul[nod_actualizat] = cost_actualizat;
+				}
+
+				const int nrPunti = muchiiInterCTC[idxCTC].size();
+				for (int j = 0; j < nrPunti; j++)
+				{
+					const muchie<moneda> punte(muchiiInterCTC[idxCTC][j]);    // puntea este o muchie a grafului initial dintre doua vf aflate in CTC diferite
+					const int idxCTC_vecin = careCTC[punte.vf2];                       // indexul CTC invecinat
+					const long long int costNou = costul[punte.vf1] + punte.cost;
+					muchie<moneda> muchieNoua(0, punte.vf2, costNou);             // pregatim o noua sursa in 0 pentru CTC invecinat si ii adaugam o muchie spre punte.vf2 cu costul = costul catre nodul din CTC anterior + punte.cost 
+					(muchiiCTC[idxCTC_vecin]).push_back(muchieNoua);			   // marcam noua muchie in muchiiCTC
+				}
+				// acum suntem pregatiti sa prelucram urmatoarea CTC data de sortarea topologica
+
+				//delete[]costul_CTC_crt;
+			}
+
+			if (areCicluNegativ)
+			{
+				delete[] vOrdineTopologica;
+				delete[] muchiiCTC;
+				delete[] muchiiInterCTC;
+				delete[] careCTC;
+				return;
+			}
+			//}
+		}
+	}
+
+	delete[] vOrdineTopologica;
+	delete[] muchiiCTC;
+	delete[] muchiiInterCTC;
+	delete[] careCTC;
+}
+
 
 int main()
 {
 	start = 0;		// daca start e setat la zero, nu se va mai citi un nod de start
-	
-	//graf<> graful(false, false, false);
-	//graful.verifvecini();
 
-	//graf<> graful(false, false, false);
-	//graful.cadru_biconexe();
+	///		/// verif vecini
+	/*graf<> graful(false, false, false);
+	graful.verifvecini();*/
 
-	//	//// muchii critice:
-	//graf<> graful(false, false, false);
-	//vector_vectori* connections = new vector_vectori;
-	//graful.copiaza_listeAdiacenta(*connections);
-	//vector_vectori vector_afisare = graful.criticalConnections(graful.get_nrvf(), *connections);
-	//for (int i = 0; i < vector_afisare.size(); i++)
-	//	std::cout << vector_afisare[i][0] << " " << vector_afisare[i][1] << "\n";
-	//delete connections;
+	///		/// BFS
+	/*start = 1;
+	graf<> graful(true, false, false);
+	int* dist = graful.BFS();
+	if (dist)
+	{
+		for (int i = 1; i <= graful.get_nrvf(); i++)
+			g << dist[i] << " ";
+		delete[]dist;
+	}*/
 
-	//graf<> graful(true, false, false);
-	//graful.cadru_tareconexe();
+	///		/// DFS & comp conexe
+	/*graf<> graful(false, false, false);
+	int* ordineVizita = graful.cadruDFS();
+	g << contor;
+	if (ordineVizita)
+	{
+		for (int i = 1; i <= graful.get_nrvf(); i++)
+			std::cout << ordineVizita[i] << " ";
+		delete[]ordineVizita;
+	}*/
 
-	//std::cout << "\n\n Status final Havel Hakimi: " << havelHakimi() << "\n\n";
+	///		/// comp biconexe
+	/*graf<> graful(false, false, false);
+	vector_vectori comp_biconexe = graful.cadru_biconexe();
+	g << contor << "\n";
+	for (unsigned int i = 0; i < comp_biconexe.size(); i++)
+	{
+		for (unsigned int j = 0; j < comp_biconexe[i].size(); j++) {
+			g << comp_biconexe[i][j] << " ";
+		}
+		g << "\n";
+	}*/
 
-	//graf<> graful(true, false, false);
-	//bool statusIsError = false;
-	//int* v_ordineTopologica =  new int[ graful.get_nrvf() + 1]{ 0 };
-	//graful.cadruSortareTopologica(v_ordineTopologica, statusIsError);
-	//if(!statusIsError)
-	//	for (int i = graful.get_nrvf(); i >= 1; i--)
-	//		std::cout << v_ordineTopologica[i] << " ";
-	//delete[]v_ordineTopologica;
+	///		/// muchii critice
+	/*graf<> graful(false, false, false);
+	vector_vectori* connections = new vector_vectori;
+	graful.copiaza_listeAdiacenta(*connections);
+	vector_vectori vector_afisare = graful.criticalConnections(graful.get_nrvf(), *connections);
+	for (int i = 0; i < vector_afisare.size(); i++)
+		std::cout << vector_afisare[i][0] << " " << vector_afisare[i][1] << "\n";
+	delete connections;*/
 
-	//graf<> graful(false, true, true);
-	//graful.kruskal();
+	///		/// comp tare conexe
+	/*graf<> graful(true, false, false);
+	vector_vectori comp_tareconexe = graful.cadru_tareconexe();
+	g << contor << "\n";
+	for (unsigned int i = 1; i < comp_tareconexe.size(); i++)
+	{
+		for (unsigned int j = 0; j < comp_tareconexe[i].size(); j++)
+			g << comp_tareconexe[i][j] << " ";
+		g << "\n";
+	}*/
 
-	//kruskal_paduri();
+	///		/// havel hakimi 
+	/*std::cout << "\n\n Status final Havel Hakimi: " << havelHakimi() << "\n\n";
+	*/
 
-	//graf<> graful(false, true, false);
-	//graful.prim();
+	///		/// sortare topologica
+	/*graf<> graful(true, false, false);
+	int* v_ordineTopologica = NULL;
+	graful.cadruSortareTopologica(v_ordineTopologica);
+	if (v_ordineTopologica)
+	{
+		for (int i = graful.get_nrvf(); i >= 1; i--)
+			g << v_ordineTopologica[i] << " ";
+		delete[]v_ordineTopologica;
+	}*/
 
-	//graf<> graful(true, true, false);
-	//graful.dijkstra();
+	///		/// paduri dijuncte 
+	/*kruskal_paduri();
+	*/
 
-	//graf<> graful(true, true, true);
-	//graful.bellmanFord();
+	///		/// kruskal
+	/*graf<> graful(false, true, true);
+	muchie<>* muchiiAPM = NULL;
+	int cost_apm = 0;
+	graful.kruskal(muchiiAPM, cost_apm);
+	if (muchiiAPM)
+	{
+		const size_t nrMuchiiAPM = graful.get_nrvf() - 1;
+		g << cost_apm << "\n" << nrMuchiiAPM;
+		for (unsigned int i = 1; i <= nrMuchiiAPM; i++)
+		{
+			g << "\n" ;
+			g << muchiiAPM[i];
+		}
 
+		delete[]muchiiAPM;
+	}*/
+
+	///		/// prim
+	/*graf<> graful(false, true, false);
+	muchie<>* muchiiAPM = NULL;
+	int cost_apm = 0;
+	graful.prim(muchiiAPM, cost_apm);
+	if (muchiiAPM)
+	{
+		const size_t nrMuchiiAPM = graful.get_nrvf() - 1;
+		g << cost_apm << "\n" << nrMuchiiAPM;
+		for (unsigned int i = 1; i <= nrMuchiiAPM; i++)
+		{
+			g << "\n" ;
+			g << muchiiAPM[i];
+		}
+
+		delete[]muchiiAPM;
+	}*/
+
+	///		/// dijkstra
+	/*graf<> graful(true, true, false);
+	long long int* costul = NULL;
+	graful.dijkstra(costul);
+	if (costul)
+	{
+		for (int i = 2; i <= graful.get_nrvf(); i++)
+			g << costul[i] << " ";
+		delete [] costul;
+	}*/
+
+	///		/// bellman ford
+	/*graf<> graful(true, true, false);
+	long long int* costul = NULL;
+	bool areCicluNegativ = false;
+	graful.bellmanFord(costul, areCicluNegativ);
+	if (costul)
+	{
+		if (!areCicluNegativ)
+			for (int i = 2; i <= graful.get_nrvf(); i++)
+				g << costul[i] << " ";
+
+		delete[]costul;
+	}*/
+
+	///	/// tarjan -> sortare topologica -> bellman ford 
 	graf<> graful(true, true, false);
-	graful.TarjanTopologicBellmanFord();
+	long long int* costul = NULL;
+	bool areCicluNegativ = false;
+	graful.TarjanTopologicBellmanFord(costul, areCicluNegativ);
+	if (costul)
+	{
+		if (!areCicluNegativ)
+			for (int i = 2; i <= graful.get_nrvf(); i++)
+				g << costul[i] << " ";
+
+		delete[]costul;
+	}
+
+	///	/// roy-floyd
+	/*graf<> graful(true, true, false, true);
+	long long int** costuri = NULL;
+	graful.royFloyd(costuri);
+	if (costuri)
+	{
+		for (int i = 1; i <= graful.get_nrvf(); i++)
+		{
+			for (int j = 1; j <= graful.get_nrvf(); j++)
+				g << costuri[i][j] << " ";
+			g << "\n";
+			if(costuri[i])
+				delete [] costuri[i];
+		}
+		delete[] costuri;
+	}*/
+
+	///	/// diametru arbore 
+	/*int nrvf;
+	f >> nrvf;
+	graf<> graful(false, false, false, false, nrvf, nrvf-1);
+	start = 1 +  rand()%graful.get_nrvf();		// incepem cautarea dintr-un nod oarecare; este important sa setam acest start DUPA ce am initializat graful, altfel se va citi incorect (vezi conditie citire nod start in constructor)
+	int* dist = graful.BFS();
+	if (dist)
+	{
+		int diametrul = -1;
+		for (int i = 1; i <= graful.get_nrvf(); i++)	// cautam cel mai indepartat nod din BFS
+			if (dist[i] > diametrul)
+			{
+				diametrul = dist[i];		// actualizam diametrul
+				start = i;		// actualizam radacina
+			}
+		delete[]dist;
+
+		dist = graful.BFS();		// mai parcurgem odata cu un BFS din radacina 
+		for (int i = 1; i <= graful.get_nrvf(); i++)	// cautam cel mai indepartat nod din BFS fata de radacina gasita
+			if (dist[i] > diametrul)
+				diametrul = dist[i];		// actualizam diametrul
+		
+		if (dist)
+		{
+			delete[]dist;
+			diametrul++;		// diametrul numara nodurile din lantul maxim, in timp ce un BFS numara muchiile din lant (cu 1 mai putine decat nodurile)
+			g << diametrul;
+		}
+	}*/
 
 	return 0;
 }
