@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -16,8 +15,8 @@
 
 std::ifstream f("graful.in");
 std::ofstream g("graful.out");
-//std::ifstream f("cuplaj.in");
-//std::ofstream g("cuplaj.out");
+//std::ifstream f("barbar.in");
+//std::ofstream g("barbar.out");
 
 
 int start = 0, contor;        // contorul il vom folosi in mai multe probleme;  start va aparea eventual ca nod de start
@@ -29,6 +28,8 @@ const int configMax = (1 << nrvfMax) +	5;          // o configuratie este o repr
 const int inf = (const int)( nrvfMax * 1e6 + 1);  // costul maxim al unui arc este de 10^6, iar un ciclu Hamiltonian va avea exact nrvf arce (si nu vom tine evidenta unor drumuri mai lungi)
 std::vector<int>* noduriIncidente;
 
+///  pentru problema lui paftenie barbarul:
+char** temnita;
 
 #define tmp_moneda template <typename moneda>
 
@@ -479,12 +480,12 @@ namespace treap
 	}
 }
 
-typedef std::stack< std::pair <int, int > > stackpair;
+typedef std::stack< std::pair <int, int >> stackpair;
 typedef std::vector< std::pair< int, int >> vpair;
 typedef std::unordered_set< int > multime;
-typedef std::vector< std::vector < int > > vector_vectori;
-#define vector_vecini std::vector < vecin<moneda> >
-#define vmuchii std::vector< muchie< moneda> >
+typedef std::vector< std::vector < int >> vector_vectori;
+#define vector_vecini std::vector < vecin<moneda>>
+#define vmuchii std::vector< muchie< moneda>>
 
 template <typename moneda>
 class graf
@@ -509,7 +510,7 @@ protected:
 	vector_vecini* veciniGrafRezidual;
 	int nrvfSt, nrvfDr;
 
-	void initializariGenerale();
+	void initializariGenerale(vector_vecini* vecini_param);
 	void initializariMuchii(int x, int y, moneda c = 0, int capacitatea = 0, int &idxListaMuchii = 0);
 	void DFS(int nod, bool* viz, int* ordineVizita, int& idxOrdineVizita);
 	void biconexe(int nod, int tata, bool* viz, multime* wayback, stackpair& muchiiviz, vector_vectori& comp_biconexe);
@@ -522,7 +523,7 @@ protected:
 
 	graf(int nrvf_param);		// doar pt declararea unor subgrafuri
 public:
-	graf(bool orientat_param = true, bool areCosturi_param = true, bool areListaMuchii_param = true, bool areListeIndecsiMuchii_param = false, bool areMatPonderi_param = false, bool areCapacitati_param = false, bool adaptareCuplaj_param = false, int nrvf_param = -1, int nrmuchii_param = -1);
+	graf(bool orientat_param = true, bool areCosturi_param = true, bool areListaMuchii_param = true, bool areListeIndecsiMuchii_param = false, bool areMatPonderi_param = false, bool areCapacitati_param = false, bool adaptareCuplaj_param = false, int nrvf_param = -1, int nrmuchii_param = -1, vector_vecini *vecini_param = NULL);
 
 	int get_nrvf() { return nrvf; }
 	int get_nrvfSt() { return nrvfSt; }
@@ -531,7 +532,7 @@ public:
 	void verifvecini(int nod_start = 1);
 	void verifveciniGrafRezidual(int nod_start = 1);
 
-	int* BFS();
+	void BFS(int *&dist, int start = 1);
 	int* cadruDFS();
 	vector_vectori cadru_biconexe();
 	vector_vectori cadru_tareconexe(bool &statusIsError = false);
@@ -550,6 +551,9 @@ public:
 	int edmondsKarp(const int nod_destinatie, const int nod_sursa = 1, bool actualizeazaFluxuri = false);
 	vpair muchiileCuFlux();
 
+	vpair conectareGraf(int& extraTotal, int& extraMaxim);
+	int distantaSiguraPaftenie(char**& temnita, const int nrLin, const int nrCol, std::vector<int>& idxDragoni, const int idIntrare, const int idIesire);
+
 	~graf()
 	{
 		delete[]vecini;
@@ -564,9 +568,15 @@ public:
 
 #pragma region graf & auxiliare
 tmp_moneda
-void graf<moneda>::initializariGenerale()
+void graf<moneda>::initializariGenerale(vector_vecini* vecini_param)
 {
 	vecini = new vector_vecini[nrvf + 1];
+
+	if (vecini_param)     // daca avem un vector de vecini sursa de unde sa incarcam datele
+		for (int i = 0; i <= nrvf; i++)
+			for (size_t j = 0; j < vecini_param[i].size(); j++)
+				vecini[i].push_back(vecini_param[i][j]);
+
 	if (areListaMuchii)
 	{
 		size_lista_muchii = nrmuchii;
@@ -624,14 +634,14 @@ void graf<moneda>::initializariMuchii(int x, int y, moneda c, int capacitatea, i
 }
 
 tmp_moneda
-graf<moneda>::graf(bool orientat_param, bool areCosturi_param, bool areListaMuchii_param, bool areListeIndecsiMuchii_param, bool areMatPonderi_param, bool areCapacitati_param, bool adaptareCuplaj_param, int nrvf_param, int nrmuchii_param) : orientat(orientat_param), areCosturi(areCosturi_param), areListaMuchii(areListaMuchii_param), areListeIndecsiMuchii(areListeIndecsiMuchii_param), areMatPonderi(areMatPonderi_param), areCapacitati(areCapacitati_param), adaptareCuplaj(adaptareCuplaj_param), nrvf(nrvf_param), nrmuchii(nrmuchii_param)
+graf<moneda>::graf(bool orientat_param, bool areCosturi_param, bool areListaMuchii_param, bool areListeIndecsiMuchii_param, bool areMatPonderi_param, bool areCapacitati_param, bool adaptareCuplaj_param, int nrvf_param, int nrmuchii_param, vector_vecini* vecini_param) : orientat(orientat_param), areCosturi(areCosturi_param), areListaMuchii(areListaMuchii_param), areListeIndecsiMuchii(areListeIndecsiMuchii_param), areMatPonderi(areMatPonderi_param), areCapacitati(areCapacitati_param), adaptareCuplaj(adaptareCuplaj_param), nrvf(nrvf_param), nrmuchii(nrmuchii_param)
 {
 	if (adaptareCuplaj)
 	{                                               // setarile necesare pentru acest tip de graf:     orientat = true,   areCapacitati = true,     adaptareCuplaj = true.
 		f >> nrvfSt >> nrvfDr >> nrmuchii;
 		nrvf = nrvfSt + nrvfDr + 2;   // adaugam un nod sursa (nodul 0) si un nod destinatie (nodul nrvf);
 
-		initializariGenerale();
+		initializariGenerale(vecini_param);
 
 		int idxListaMuchii = 0;
 		for (int i = 0; i < nrmuchii; i++)
@@ -666,7 +676,7 @@ graf<moneda>::graf(bool orientat_param, bool areCosturi_param, bool areListaMuch
 			if (start)	// daca start este nenul, inseamna ca avem de citit un nod de start...
 				f >> start;
 
-			initializariGenerale();
+			initializariGenerale(vecini_param);
 
 			int idxListaMuchii = 0;
 			for (int i = 0; i < nrmuchii; i++)
@@ -689,7 +699,7 @@ graf<moneda>::graf(bool orientat_param, bool areCosturi_param, bool areListaMuch
 			f >> nrvf;
 			nrmuchii = nrvf * nrvf;
 
-			initializariGenerale();
+			initializariGenerale(vecini_param);
 
 			int idxListaMuchii = 0;
 			for (int i = 1; i <= nrvf; i++)
@@ -737,10 +747,11 @@ void graf<moneda>::verifveciniGrafRezidual(int nod_start)
 }
 
 tmp_moneda
-int* graf<moneda>::BFS()
+void graf<moneda>::BFS(int *&dist, int start)
 {
-	int* dist = new int[nrvf + 1]{ 0 };	// initializam distantele cu 0 (le decrementam ulterior)
-	std::queue <int> qBFS;					// coada pt BFS
+	if(!dist)                                    // daca parametrul dist este un pointer catre NULL (nu este setat deja pt BFS)
+		dist = new int[nrvf + 1]{ 0 };	// initializam distantele cu 0 (le decrementam ulterior)
+	std::queue <int> qBFS;				// coada pt BFS
 	qBFS.push(start);
 	dist[start] = 1;
 
@@ -760,10 +771,8 @@ int* graf<moneda>::BFS()
 		qBFS.pop();
 	}
 
-	for (int i = 1; i <= nrvf; i++)
+	for (int i = 0; i <= nrvf; i++)
 		dist[i]--;
-
-	return dist;
 }
 
 tmp_moneda
@@ -779,7 +788,6 @@ void graf<moneda>::DFS(int nod, bool* viz, int* ordineVizita, int& idxOrdineVizi
 			idxOrdineVizita++;
 			DFS(nod_urm, viz, ordineVizita, idxOrdineVizita);
 		}
-
 	}
 }
 tmp_moneda
@@ -2072,12 +2080,196 @@ int graf<moneda>::edmondsKarp(const int nod_destinatie, const int nod_sursa, boo
 tmp_moneda
  vpair graf<moneda>::muchiileCuFlux()
 {
+	// returneaza un vector de perechi de int ce reprezinta muchiile cu flux din reteaua de transport
 	vpair solutia;
 	for(int i = 1; i <= nrvfSt; i++)
 		for(size_t j = 0; j < vecini[i].size(); j++)
 			if (vecini[i][j].flux)				
 				solutia.push_back(std::pair<int, int>(i, vecini[i][j].index));
 	return solutia;
+}
+
+tmp_moneda
+vpair graf<moneda>::conectareGraf(int& extraTotal, int& extraMaxim)
+{
+	// extraTotal repr nr total de muchii extra ce trb adaugate pt ca graful sa fie conex
+	// extraMaxim repr cel mai mare nr de muchii extra incidente aceluaiasi nod
+
+	vpair muchiileExtra;         // vectorul solutie
+	if (nrvf == 2)
+	{// daca am doua noduri si stiu ca graful nu este conex, inseamna ca ele sunt izolate si doar le leg unul cu altul
+		extraTotal = 1;
+		extraMaxim = 1;
+		std::pair<int, int> aux(1, 2);
+		muchiileExtra.push_back(aux);
+		return muchiileExtra;
+	}
+
+	contor = 0;                       // nr componente conexe
+	bool* viz = new bool[nrvf + 1]{ 0 };
+	int* ordineVizita = new int[nrvf + 1]{ 0 };
+	int idxOrdineVizita = 0;   //  (indexam de la 1)
+
+	vpair capCoada;                // vector de perechi de int ce repr nodul cu care am inceput parcurgerea DFS a unei componente conexe si cel cu care am incheiat
+	std::vector<int> noduriIzolate;
+	std::vector<int> legaturiDisponibile;                     // legaturi disponibile pt nodurile izolate
+	for (int i = 1; i <= nrvf; i++)
+		if (!viz[i])
+		{
+			contor++;
+			idxOrdineVizita++;
+			int idxOrdineVizitaVechi = idxOrdineVizita; // vom retine punctul de ordine de unde incepe aceasta comp conexa
+			DFS(i, viz, ordineVizita, idxOrdineVizita);
+			int cap = i, coada = *(ordineVizita + idxOrdineVizita);
+
+			if (cap == coada)                                           // daca avem un singur nod in componenta conexa
+				noduriIzolate.push_back(cap);                 // retinem nodul izolat
+			else
+			{
+				std::pair<int, int> legaturile(cap, coada);  // primul, respectiv ultimul, nod parcurs din aceasta comp conexa
+				capCoada.push_back(legaturile);              //    acestea vor lega comp conexe (care nu sunt noduri izolate) intre ele
+			}
+			
+			for (int ord = idxOrdineVizitaVechi + 1; ord < idxOrdineVizita; ord++)  
+			{// referitor la nodurile acestei comp conexe care nu sunt nici cap nici coada:
+				const int legatura = ordineVizita[ord];
+				if (noduriIzolate.size())                                                    // daca am noduri izolate care au nevoie de legatura
+				{
+					std::pair<int, int> aux(noduriIzolate.back(), legatura);  // o folosesc acum sa le conectez
+					muchiileExtra.push_back(aux);                                     
+					noduriIzolate.pop_back();                                             // si le scot din nodurile izolate 
+				}
+				else                                                                                   // daca nu am acum noduri izolate pt legatura aceasta
+					legaturiDisponibile.push_back(legatura);                      // o pastrez pt mai tz
+			}
+		}
+
+	int legatura = -1;
+	if (capCoada.size())                                                           // daca am cel putin o comp conexa (care nu e nod izolat)
+	{
+		legaturiDisponibile.push_back(capCoada[0].first);        // capul primei comp conexe este o legatura disponibila pt nodurile izolate
+		legatura = capCoada[0].second;
+		for (size_t i = 1; i < capCoada.size(); i++)                       // voi obtine un lant de componente conexe:
+		{
+			std::pair<int, int> aux(legatura, capCoada[i].first);   // legam coada perechii precedente de capul celei curente
+			muchiileExtra.push_back(aux);                                // stochez muchia extra
+			legatura = capCoada[i].second;                                 // retin coada perechii curente ca fiind urmatoarea legatura
+		}
+		legaturiDisponibile.push_back(legatura);                     // coada ultimei comp conexe este o legatura disponibila pt nodurile izolate
+	}
+
+	while (noduriIzolate.size() and legaturiDisponibile.size())  // voi lega nodurile izolate de legaturile disponibile cat pot
+	{
+		std::pair<int, int> aux(noduriIzolate.back(), legaturiDisponibile.back());
+		muchiileExtra.push_back(aux);
+		noduriIzolate.pop_back();
+		legaturiDisponibile.pop_back();
+	}
+	
+	extraTotal = contor - 1;   // informatia asta reiese imediat
+	extraMaxim = 1;               // <- asta depinde 
+	if (noduriIzolate.size())   // daca au mai ramas noduri izolate
+	{
+		extraMaxim = 2;   // voi inlantui nodurile izolate intre 
+		if (legatura != -1)   // si pe primul il voi lega de comp conexa mare, daca ea exista
+		{
+			std::pair<int, int> aux(noduriIzolate.back(), legatura);
+			muchiileExtra.push_back(aux);
+	        // nu dau pop din noduriIzolate pt ca o voi face oricum in afara ifului
+		}
+		legatura = noduriIzolate.back();  // nodul de unde incep lantul de noduri izolate
+		noduriIzolate.pop_back();           // cum am salvat nodul in variabila legatura, nu il mai retin in noduriIzolate
+
+		while (noduriIzolate.size())
+		{
+			std::pair<int, int> aux(noduriIzolate.back(), legatura);
+			muchiileExtra.push_back(aux);
+
+			legatura = noduriIzolate.back();
+			noduriIzolate.pop_back();
+		}
+	}
+	
+	delete[] ordineVizita;
+	delete[]viz;
+	return muchiileExtra;
+}
+
+// ia linia si coloana dintr-o matrice si returneaza locul intr-o proiectie unidimensionala (array) 
+int getId(const int lin, const int col, const int nrLin)
+{
+	return lin * nrLin + col;
+}
+
+// ia locul intr-o proiectie unidimensionala(array) si seteaza coordonatele de linie si coloana intr-o matrice cu nrLin linii
+void getCoords(int& lin, int& col, const int id, const int nrLin)
+{
+	lin = id / nrLin;
+	col = id % nrLin;
+}
+
+void transformaVecinDragon(char**& temnita, int nrLin, int nrCol, int lin, int col, std::vector<int> &viitoriiDragoni, bool &incheieCautarile)
+{
+	if (lin >= 0 and lin < nrLin and col >= 0 and col < nrCol)
+	{
+		if (temnita[lin][col] == 'I' or temnita[lin][col] == 'O')
+			incheieCautarile = true;           // daca intrarea sau iesirea devin dragoni, incheiem cautarea distantei maxime
+		else if (temnita[lin][col] == '.' or temnita[lin][col] == '*')
+		{
+			viitoriiDragoni.push_back(getId(lin, col, nrLin));
+			temnita[lin][col] = 'D';
+		}
+	}
+}
+
+tmp_moneda
+int graf<moneda>::distantaSiguraPaftenie(char **&temnita, const int nrLin, const int nrCol, std::vector<int> &idxDragoni, const int idIntrare, const int idIesire)
+{
+	int* dist = new int[nrvf + 1] {0};
+	
+	BFS(dist, idIntrare);                   // verificam daca nodul de iesire este accesibil
+	if (dist[idIesire] < 0)
+	{
+		delete[] dist;
+		return -1;
+	}
+
+	int distantaMax = 0;
+	while (true)
+	{
+		memset(dist, 0, sizeof(int)*(nrvf+1));
+		for (size_t i = 0; i < idxDragoni.size(); i++)
+			dist[idxDragoni[i]] = -1;       // in felul asta, va fi inaccesibil parcurgerii BFS, distanta fiind practic +infinit      
+
+		BFS(dist, idIntrare);
+		if (dist[idIesire] >= 0)
+			distantaMax++;
+		else
+			break;
+
+		std::vector<int> viitoriiDragoni; // transform celulele non-dragoni din jurul dragonilor in dragoni 
+		for (size_t i = 0; i < idxDragoni.size(); i++)
+		{
+			const int id = idxDragoni[i];   
+			int lin, col;
+			getCoords(lin, col, id, nrLin);
+
+			bool incheieCautarile = false;
+			transformaVecinDragon(temnita, nrLin, nrCol, lin - 1, col, viitoriiDragoni, incheieCautarile);
+			transformaVecinDragon(temnita, nrLin, nrCol, lin + 1, col, viitoriiDragoni, incheieCautarile);
+			transformaVecinDragon(temnita, nrLin, nrCol, lin, col - 1, viitoriiDragoni, incheieCautarile);
+			transformaVecinDragon(temnita, nrLin, nrCol, lin, col + 1, viitoriiDragoni, incheieCautarile);
+			if (incheieCautarile)
+			{
+				delete[] dist;
+				return distantaMax;
+			}
+		}
+		idxDragoni = viitoriiDragoni;   // viitorii dragoni devin oficial dragoni 
+	}
+
+	delete[] dist;
+	return distantaMax;
 }
 #pragma endregion
 
@@ -2108,6 +2300,7 @@ public:
 	}
 };
 
+
 int main()
 {
 	start = 0;		// daca start e setat la zero, nu se va mai citi un nod de start
@@ -2119,7 +2312,8 @@ int main()
 	///		/// BFS
 	/*start = 1;
 	graf<> graful(true, false, false);
-	int* dist = graful.BFS();
+	int* dist = NULL;
+	graful.BFS(dist, start);
 	if (dist)
 	{
 		for (int i = 1; i <= graful.get_nrvf(); i++)
@@ -2291,7 +2485,8 @@ int main()
 	f >> nrvf;
 	graf<> graful(false, false, false, false, false, false, false, nrvf, nrvf-1);
 	start = 1 +  rand()%graful.get_nrvf();		// incepem cautarea dintr-un nod oarecare; este important sa setam acest start DUPA ce am initializat graful, altfel se va citi incorect (vezi conditie citire nod start in constructor)
-	int* dist = graful.BFS();
+	int* dist;
+	graful.BFS(dist, start);
 	if (dist)
 	{
 		int diametrul = -1;
@@ -2303,7 +2498,7 @@ int main()
 			}
 		delete[]dist;
 
-		dist = graful.BFS();		// mai parcurgem odata cu un BFS din radacina
+		graful.BFS(dist, start);		// mai parcurgem odata cu un BFS din radacina
 		for (int i = 1; i <= graful.get_nrvf(); i++)	// cautam cel mai indepartat nod din BFS fata de radacina gasita
 			if (dist[i] > diametrul)
 				diametrul = dist[i];		// actualizam diametrul
@@ -2350,6 +2545,68 @@ int main()
 	vpair cuplaj = graful.muchiileCuFlux();
 	for (size_t i = 0; i < cuplaj.size(); i++)
 		g << cuplaj[i].first << " " << cuplaj[i].second - graful.get_nrvfSt() << "\n";*/
+
+	///		/// conexidad 
+	/*graf<int> graful(false, false, false);
+	int extraTotal, extraMaxim;
+	vpair muchiileExtra = graful.conectareGraf(extraTotal, extraMaxim);
+	g << extraMaxim << "\n" << extraTotal << "\n";
+	for (size_t i = 0; i < muchiileExtra.size(); i++)
+		g << muchiileExtra[i].first << " " << muchiileExtra[i].second << "\n";*/
+
+	///		/// paftenie barbarul
+	/*int nrLin, nrCol;
+	f >> nrLin >> nrCol;
+
+	temnita = new char* [nrLin];    // matricea temnitei, cu liniile si coloanele indexate de la 0
+	for (int i = 0; i < nrLin; i++)
+		temnita[i] = new char[nrCol];
+
+	int nrvfGraf = nrLin * nrCol, nrmuchiiGraf = 0;
+	std::vector< vecin< int >>* veciniGraf = new std::vector< vecin< int >>[nrvfGraf + 1];  // fiecare celula din matrice cu camera goala, celula de intrare si cea de iesire vor fi cate un nod intr-un graf
+	std::vector<int> idxDragoni;          // id-urile la care gasim dragoni 
+	int idIntrare, idIesire;              
+
+	for(int i = 0; i < nrLin; i++ )           // initializam matricea temnita, vectorul de vecini (cu id-uri) pt graful celulelor accesibile, id-urile speciale (pt intrarea si iesirea din temnita)
+		for (int j = 0; j < nrCol; j++)
+		{
+			char val;
+			f >> val;
+			temnita[i][j] = val;
+			int id = getId(i, j, nrLin);      // pozitie in secventa liniara de mem
+
+			if (val == '.' or val == 'I' or val == 'O')
+			{
+				if (i > 0 and (temnita[i - 1][j] == '.' or temnita[i - 1][j] == 'I' or temnita[i - 1][j] == 'O'))   // daca am celula accesibila deasupra
+				{                                                                                                                                        // leg celula crt de cea de deasupra (si reciproc)
+					nrmuchiiGraf++;
+					int idSus = getId(i - 1, j, nrLin);
+					veciniGraf[id].push_back(idSus);
+					veciniGraf[idSus].push_back(id);
+				}
+				if (j > 0 and (temnita[i][j - 1] == '.' or temnita[i][j - 1] == 'I' or temnita[i][j - 1] == 'O'))    // daca am celula accesibila la stanga
+				{                                                                                                                                          // leg celula crt de cea din stanga (si reciproc)
+					nrmuchiiGraf++;
+					int idStanga = getId(i, j - 1, nrLin);
+					veciniGraf[id].push_back(idStanga);
+					veciniGraf[idStanga].push_back(id);
+				}
+
+				if(val == 'I')
+					idIntrare = id;               // pozitie intrare in secventa liniara de mem
+				if(val == 'O')
+					idIesire = id;                 // pozitie iesire in secventa liniara de mem
+			}
+			else if(val == 'D')
+				idxDragoni.push_back(id); // pozitie dragon in secventa liniara de mem
+		}
+
+	graf<int> graful(false, false, false, false, false, false, false, nrvfGraf, 0, veciniGraf);
+	g << graful.distantaSiguraPaftenie(temnita, nrLin, nrCol, idxDragoni, idIntrare, idIesire);
+	
+	for (int i = 0; i < nrLin; i++)
+		delete[] temnita[i];
+	delete[] temnita;*/
 
 	return 0;
 }
