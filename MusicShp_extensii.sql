@@ -213,6 +213,7 @@ END;
 
 SELECT * FROM livrare;
 SELECT * FROM transport;
+select * from itinerar;
 
 DECLARE
     coduriLivrari  varrayCoduriLivrari := varrayCoduriLivrari();
@@ -242,8 +243,71 @@ END;
 /
 ROLLBACK;
 
+select * from locatie;
 
+-- ex 8: Creati o functie ce primeste ca parametru de intrare codul unui produs si returneaza codul unui lutier 
+-- aflat in acelasi judet in care se gaseste magazinul in care sta produsul dat. Daca produsul nu se afla intr-un magazin 
+-- sau daca in judetul respectiv nu este niciun lutier, functia va returna -1.
+CREATE OR REPLACE FUNCTION lutierLocal(codProdus IN NUMBER)
+RETURN lutier.cod_lutier%TYPE AS 
+    TYPE coduriLutieri   IS TABLE OF lutier.cod_lutier%TYPE;
 
+    judetLocatie    locatie.judet%TYPE;
+    codLutier         lutier.cod_lutier%TYPE;
+    tblCoduriLutieri   coduriLutieri := coduriLutieri();
+    
+BEGIN
+    SELECT l.judet
+    INTO judetLocatie
+    FROM produs p, magazin m, locatie l 
+    WHERE p.cod_produs = codProdus          -- alegem produsul cu codul dat
+    AND m.cod_magazin = p.cod_magazin   -- join intre magazin si produs 
+    AND l.cod_locatie = m.cod_locatie;        -- join intre locatie si magazin 
+    
+    SELECT lut.cod_lutier
+    INTO codLutier
+    FROM lutier lut, locatie loc
+    WHERE loc.judet = judetLocatie             -- judetul gasit
+    AND lut.cod_locatie = loc.cod_locatie;  -- join intre lutier si locatie 
+    
+    RETURN codLutier;
+    
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('lutierLocal: Atentie! In produs, cod_magazin nu trebuie sa fie null. Posibil sa nu fie un lutier in judetul magazinului.');
+            RETURN -1;
+        WHEN TOO_MANY_ROWS THEN
+            DBMS_OUTPUT.PUT_LINE('lutierLocal: Mai multi lutieri sunt la dispozitie. A fost returnat primul gasit.');
+            SELECT lut.cod_lutier
+            BULK COLLECT INTO tblCoduriLutieri
+            FROM lutier lut, locatie loc
+            WHERE loc.judet = judetLocatie             -- judetul gasit
+            AND lut.cod_locatie = loc.cod_locatie;  -- join intre lutier si locatie 
+            
+            codLutier := tblCoduriLutieri(1);
+            RETURN codLutier;
+END lutierLocal;
+/
 
+SELECT p.cod_produs produs, m.cod_magazin magazin, l.judet judet
+FROM produs p, magazin m, locatie l
+WHERE p.cod_magazin IS NOT NULL
+AND m.cod_magazin = p.cod_magazin
+AND l.cod_locatie = m.cod_locatie;
 
+SELECT lut.cod_lutier lutier, loc.judet judet
+FROM lutier lut, locatie loc
+WHERE loc.cod_locatie = lut.cod_locatie;
+
+DECLARE
+    codLutierLocal   lutier.cod_lutier%TYPE;
+BEGIN
+    codLutierLocal := lutierLocal(10);  -- vezi pt codurile de produse: 10, 11, 13
+    IF codLutierLocal > -1
+        THEN
+            DBMS_OUTPUT.PUT_LINE('Codul unui lutier din judet: ' || codLutierLocal);
+        ELSE 
+            DBMS_OUTPUT.PUT_LINE('Eroare intampinata. Vedeti detalii mai sus');
+    END IF;
+END;
 
