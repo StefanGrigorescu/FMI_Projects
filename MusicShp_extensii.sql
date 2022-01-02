@@ -25,6 +25,10 @@ BEGIN
     FROM livrare
     WHERE cod_livrare = codLivrare;
 
+    UPDATE livrare
+    SET status_livrare = 'sosita'
+    WHERE cod_livrare = codLivrare;
+
     OPEN c;
     LOOP
         FETCH c INTO codProdusCrt;
@@ -37,9 +41,6 @@ BEGIN
     END LOOP;
     CLOSE c;
 
-    UPDATE livrare
-    SET status_livrare = 'sosita'
-    WHERE cod_livrare = codLivrare;
     DBMS_OUTPUT.PUT_LINE('Livrarea cu codul ' || codLivrare || ' s-a incheiat');
     
     EXCEPTION
@@ -379,5 +380,110 @@ BEGIN
         DBMS_OUTPUT.NEW_LINE();
     END LOOP;
 END;
+/
+
+
+-- ex 11: Creati un trigger la nivel de linie cu executare inainte, pentru update-uri pe coloana status_livrare a tabelului livrare.
+-- Triggerul va adauga intr-un depozit anume (adica va insera in tabelul produs) cate un produs nou pentru fiecare produs din livrarea ce se va actualiza.
+-- Produsele noi vor prelua de la cele livrate: tip, nume, pret, greutate, material_predominant, producator
+-- Depozitul se va alege in felul urmator: prioritatea cea mai mare o au depozitele din acelasi judet cu magazinul la care ajunge livrarea,
+-- apoi mai au prioritate depozitele cu un numar cat mai mic de produse (calculat inainte de actualizarile triggerului).
+SELECT m.cod_magazin, loc.judet
+FROM magazin m, locatie loc
+WHERE m.cod_locatie = loc.cod_locatie;
+
+SELECT d.cod_depozit, loc.judet
+FROM depozit d, locatie loc
+WHERE d.cod_locatie = loc.cod_locatie;
+
+CREATE SEQUENCE seqCoduriProduse
+    START WITH 57
+    INCREMENT BY 1
+    MINVALUE 1
+    MAXVALUE 999999999
+    CYCLE;
+
+CREATE OR REPLACE TRIGGER completareStocDepozit 
+    BEFORE UPDATE OF status_livrare ON livrare
+    FOR EACH ROW
+DECLARE
+    TYPE produseNoi IS TABLE OF produs%ROWTYPE;
+    TYPE coduriDepozite IS TABLE OF depozit.cod_depozit%TYPE;
+    
+    tblProduseNoi   produseNoi := produseNoi();
+    tblCoduriDepozite   coduriDepozite := coduriDepozite();
+    codLivrare     livrare.cod_livrare%TYPE;
+    codDepozit   depozit.cod_depozit%TYPE;
+    codMagazin  livrare.cod_magazin%TYPE;
+BEGIN
+    codLivrare := :OLD.cod_livrare;
+    codMagazin := :OLD.cod_magazin;
+    
+    -- retinem depozitele din acelasi judet cu magazinul la care ajunge livrarea curenta:
+    SELECT d.cod_depozit
+    BULK COLLECT INTO tblCoduriDepozite
+    FROM locatie loc, depozit d
+    WHERE loc.judet =                               -- locatiile aflate in judetul curent
+        (SELECT loc.judet judetulCrt                         
+        FROM magazin m, locatie loc
+        WHERE m.cod_magazin = codMagazin   -- magazinul la care ajunge livrarea curenta
+        AND loc.cod_locatie = m.cod_locatie)    -- join intre locatie si magazin (adica locatia magazinului)
+    AND d.cod_locatie = loc.cod_locatie   -- join intre depozit si locatie (adica depozitul de la locatie)
+    ORDER BY                                             -- depozitele cu mai putine produse au prioritate
+        (SELECT COUNT(p.cod_produs)
+        FROM produs p
+        WHERE p.cod_depozit = d.cod_depozit  -- join intre produs si depozit
+        ); 
+
+    -- daca nu am gasit un depozit in acelasi judet, consideram toate depozitele
+    IF tblCoduriDepozite.COUNT = 0
+        THEN
+            SELECT d.cod_depozit
+            BULK COLLECT INTO tblCoduriDepozite
+            FROM depozit d
+            ORDER BY                                      -- depozitele cu mai putine produse au prioritate
+            (SELECT COUNT(p.cod_produs)
+            FROM produs p
+            WHERE p.cod_depozit = d.cod_depozit  -- join intre produs si depozit
+            );
+    END IF;
+
+    codDepozit := tblCoduriDepozite(1);  -- retinem doar primul depozit (cu prioritatea cea mai mare) din cate avem la dispozitie
+    
+    SELECT seqCoduriProduse.NEXTVAL, codDepozit, NULL, NULL, NULL, p.tip, p.nume, p.pret, p.greutate, p.material_predominant, p.producator
+    BULK COLLECT INTO tblProduseNoi
+    FROM produs p
+    WHERE p.cod_livrare = codLivrare;
+    
+    FOR i IN tblProduseNoi.FIRST..tblProduseNoi.LAST LOOP
+        -- inseram in produs o linie cu toate datele din tblProduseNoi(i):
+        INSERT INTO produs VALUES(tblProduseNoi(i).cod_produs, tblProduseNoi(i).cod_depozit, tblProduseNoi(i).cod_magazin, tblProduseNoi(i).cod_lutier, tblProduseNoi(i).cod_livrare, 
+        tblProduseNoi(i).tip, tblProduseNoi(i).nume, tblProduseNoi(i).pret, tblProduseNoi(i).greutate, tblProduseNoi(i).material_predominant, tblProduseNoi(i).producator);
+
+        DBMS_OUTPUT.PUT_LINE('In depozitul cu codul ' || tblProduseNoi(i).cod_depozit || ' a fost adaugat produsul cu codul ' || tblProduseNoi(i).cod_produs);
+    END LOOP;
+    
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('completareStocDepozit: Eroare no_data_found; este posibil sa nu fie produse in livrarea respectiva');
+END;
+/
+
+SELECT *
+FROM produs;
+
+EXECUTE sosireLivrare(1);
+/
+
+SELECT *
+FROM produs;
+
+ROLLBACK;
+
+DROP TRIGGER completareStocDepozit;
+DROP SEQUENCE seqCoduriProduse;
+
+
+-- de facut:  ex 10, 12 cu triggere   si  ex 13 cu pachet
 
 
