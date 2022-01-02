@@ -1,8 +1,8 @@
 --DROP TABLE  produs;
 --DROP TABLE livrare;
+--DROP TABLE  oprire_transport;
 --DROP TABLE transport;
 --DROP TABLE oprire;
---DROP TABLE  itinerar;
 --DROP TABLE  sofer;
 --DROP TABLE  vehicul; 
 --DROP TABLE  angajat;
@@ -100,27 +100,15 @@ CONSTRAINT fk2_cod_depozit FOREIGN KEY (cod_depozit)
 REFERENCES depozit(cod_depozit)
 );
 
-CREATE TABLE itinerar
-(cod_itinerar NUMBER(10) NOT NULL,
-include_vama VARCHAR2(2),
-CONSTRAINT pk_cod_itinerar PRIMARY KEY (cod_itinerar),
-CONSTRAINT chk_include_vama CHECK (LOWER(include_vama) LIKE 'da' OR LOWER(include_vama) LIKE 'nu')
-);
-
 CREATE TABLE oprire
 (localitate VARCHAR2(20) NOT NULL,
-cod_itinerar NUMBER(10) NOT NULL,
-durata VARCHAR2(20),
-CONSTRAINT pk_localitate_cod_itinerar PRIMARY KEY (localitate, cod_itinerar),
-CONSTRAINT fk1_cod_itinerar FOREIGN KEY (cod_itinerar) 
-REFERENCES itinerar(cod_itinerar)
+CONSTRAINT pk_localitate PRIMARY KEY (localitate)
 );
 
 CREATE TABLE transport
 (cod_transport NUMBER(10) NOT NULL,
 nr_inmat VARCHAR2(20) NOT NULL,
 cod_sofer NUMBER(10) NOT NULL,
-cod_itinerar NUMBER(10) NOT NULL,
 data_plecare DATE,
 ora_plecare NUMBER(4),
 CONSTRAINT pk_cod_transport PRIMARY KEY (cod_transport),
@@ -128,9 +116,20 @@ CONSTRAINT fk1_cod_sofer FOREIGN KEY (cod_sofer)
 REFERENCES sofer(cod_sofer),
 CONSTRAINT fk1_nr_inmat FOREIGN KEY (nr_inmat) 
 REFERENCES vehicul(nr_inmat),
-CONSTRAINT fk2_cod_itinerar FOREIGN KEY (cod_itinerar) 
-REFERENCES itinerar(cod_itinerar),
 CONSTRAINT chk1_ora_plecare CHECK (ora_plecare >= 0 AND ora_plecare < 2400)
+);
+
+CREATE TABLE oprire_transport
+(cod_transport NUMBER(10) NOT NULL,
+localitate VARCHAR2(20) NOT NULL,
+include_vama VARCHAR2(2),
+durata VARCHAR2(20),
+CONSTRAINT pk_cod_transport_localitate PRIMARY KEY (cod_transport, localitate),
+CONSTRAINT fk_cod_transport FOREIGN KEY (cod_transport) 
+REFERENCES transport(cod_transport),
+CONSTRAINT fk_localitate FOREIGN KEY (localitate) 
+REFERENCES oprire(localitate),
+CONSTRAINT chk_include_vama CHECK (LOWER(include_vama) LIKE 'da' OR LOWER(include_vama) LIKE 'nu')
 );
 
 CREATE TABLE livrare
@@ -195,7 +194,7 @@ INSERT INTO locatie(cod_locatie, judet, oras, strada, numar_cladire, apartament)
 INSERT INTO locatie(cod_locatie, judet, oras, strada, numar_cladire, apartament) VALUES(11, 'Constanta', 'Constanta', 'Aleea Scoicilor', 1, 38);
 INSERT INTO locatie(cod_locatie, judet, oras, strada, numar_cladire, apartament) VALUES(12, 'Arges', 'Topoloveni', 'S-duta Topolovenilor', 2, 4);
 INSERT INTO locatie(cod_locatie, judet, oras, strada, numar_cladire, apartament) VALUES(13, 'Dolj', 'Craiova', 'Via Sarii', 1, 8);
-SELECT * FROM locatie;
+--SELECT * FROM locatie;
 
 INSERT INTO lutier(cod_lutier, nume, prenume, nr_tel, email, cod_locatie) VALUES(1, 'Ionescu', 'Gigel', '0732103441', 'igigleandr@yahoo.com', 1);
 INSERT INTO lutier(cod_lutier, nume, prenume, nr_tel, email, cod_locatie) VALUES(6, 'Ionescu', 'Andrei', '0732214562', 'iandreii@yahoo.com', 1);
@@ -203,14 +202,14 @@ INSERT INTO lutier(cod_lutier, nume, prenume, nr_tel, email, cod_locatie) VALUES
 INSERT INTO lutier(cod_lutier, nume, prenume, nr_tel, email, cod_locatie) VALUES(3, 'Stroe', 'Andrei', '0734940265', 'stroe23@yahoo.com', 3);
 INSERT INTO lutier(cod_lutier, nume, prenume, nr_tel, email, cod_locatie) VALUES(4, 'Stoici', 'Alexandru', '0735273197', 'stoalex2@yahoo.com', 4);
 INSERT INTO lutier(cod_lutier, nume, prenume, nr_tel, email, cod_locatie) VALUES(5, 'Aioanei', 'Marius', '0730784294', 'aioaneity@google.com', 5);
-SELECT * FROM lutier;
+--SELECT * FROM lutier;
 
 INSERT INTO magazin(cod_magazin, nume, ora_deschidere, ora_inchidere, cod_locatie) VALUES(1, 'Geo+Alina Soarelui', 800, 1900, 1);
 INSERT INTO magazin(cod_magazin, nume, ora_deschidere, ora_inchidere, cod_locatie) VALUES(2, 'Geo+Alina Morii', 800, 2000, 6);
 INSERT INTO magazin(cod_magazin, nume, ora_deschidere, ora_inchidere, cod_locatie) VALUES(3, 'Geo+Alina Tanta', 1200, 1600, 8);
 INSERT INTO magazin(cod_magazin, nume, ora_deschidere, ora_inchidere, cod_locatie) VALUES(4, 'Geo+Alina Viteazul', 800, 1900, 9);
 INSERT INTO magazin(cod_magazin, nume, ora_deschidere, ora_inchidere, cod_locatie) VALUES(5, 'Geo+Alina Dumbravii', 700, 1800, 10);
-SELECT * FROM magazin;
+--SELECT * FROM magazin;
 
 INSERT INTO depozit(cod_depozit, nume, cod_locatie) VALUES (1, 'Ilfov Stocks', 1);
 INSERT INTO depozit(cod_depozit, nume, cod_locatie) VALUES (2, 'Depozit Dealului', 4);
@@ -219,26 +218,26 @@ INSERT INTO depozit(cod_depozit, nume, cod_locatie) VALUES (4, 'Magazia lui Mari
 INSERT INTO depozit(cod_depozit, nume, cod_locatie) VALUES (5, 'Depozit Blocului', 12);
 INSERT INTO depozit(cod_depozit, nume, cod_locatie) VALUES (6, 'Depozit Blocului', 12);
 INSERT INTO depozit(cod_depozit, nume, cod_locatie) VALUES (7, 'Depozit599', 13);
-SELECT* FROM depozit;
+--SELECT* FROM depozit;
 
 INSERT INTO functie(cod_functie, nume, salariu) VALUES (1, 'Director Stocuri', 4400);
 INSERT INTO functie(cod_functie, nume, salariu) VALUES (2, 'Agent Vanzari', 2800);
 INSERT INTO functie(cod_functie, nume, salariu) VALUES (3, 'Manager Vanzari', 3700);
 INSERT INTO functie(cod_functie, nume, salariu) VALUES (4, 'Specialist Electr.', 3200);
 INSERT INTO functie(cod_functie, nume, salariu) VALUES (5, 'Resp. Intretinere', 2300);
-SELECT * FROM functie;
+--SELECT * FROM functie;
 
-SELECT sysdate
-FROM dual;
+--SELECT sysdate
+--FROM dual;
 INSERT INTO angajat(cod_angajat, cod_magazin, cod_functie, nume, prenume, data_angajare) VALUES (1, 1, 1, 'Pavelescu', 'Tiberiu', '22-04-2015');
 INSERT INTO angajat(cod_angajat, cod_magazin, cod_functie, nume, prenume, data_angajare) VALUES (2, 2, 1, 'Raif', 'Andreea', '27-10-2020');
 INSERT INTO angajat(cod_angajat, cod_magazin, cod_functie, nume, prenume, data_angajare) VALUES (3, 3, 1, 'Marcelo', 'Juan', '10-11-2018');
 INSERT INTO angajat(cod_angajat, cod_magazin, cod_functie, nume, prenume, data_angajare) VALUES (4, 4, 1, 'Chitoi', 'Dragos', '16-04-2017');
 INSERT INTO angajat(cod_angajat, cod_magazin, cod_functie, nume, prenume, data_angajare) VALUES (5, 5, 1, 'Pravale', 'Diana', '25-08-2012');
-SELECT * FROM angajat;
+--SELECT * FROM angajat;
 
-SELECT * FROM locatie;
-SELECT* FROM depozit;
+--SELECT * FROM locatie;
+--SELECT* FROM depozit;
 INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('DJ 131 ANA', 'BE',7,1);
 INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('IF 50 PTR', 'C',4,3);
 INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('IF 237 MSU', 'C', 1, 3);
@@ -246,9 +245,9 @@ INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('IF 0
 INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('SB 672 CMN', 'C', 5, 5);
 INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('CT 116 MLG', 'BE', 4,6);
 INSERT INTO vehicul(nr_inmat, categorie, ani_vechime, cod_depozit) VALUES ('AG 198 IBY', 'C', 3, 7);
-SELECT * FROM vehicul;
+--SELECT * FROM vehicul;
 
-DESC sofer;
+--DESC sofer;
 INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depozit) VALUES (1, 'Pirvu', 'George', 0773721895, 'BE', 1);
 INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depozit) VALUES (2, 'Lupu', 'Toma', 0743265830, 'C', 3);
 INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depozit) VALUES (3, 'Lupu', 'Vasile', 0243195285, 'C', 3);
@@ -256,77 +255,72 @@ INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depoz
 INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depozit) VALUES (5, 'Amzu', 'Nicu', 0246942666, 'C', 5);
 INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depozit) VALUES (6, 'Cismiu', 'Andra', 0770883829, 'BE', 6);
 INSERT INTO sofer(cod_sofer, nume, prenume, telefon, categorie_carnet, cod_depozit) VALUES (7, 'Lica', 'Tanase', 0040012421691, 'C', 7);
-SELECT * FROM sofer;
+--SELECT * FROM sofer;
 
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (1, 'nu'); 
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (2, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (3, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (4, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (5, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (6, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (7, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (8, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (9, 'nu');
-INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (10, 'nu');
---INSERT INTO itinerar(cod_itinerar, include_vama) VALUES (11, 'hm'); -- exp incalcare constrangere
-SELECT * FROM itinerar;
+--SELECT m.nume, m.cod_locatie, l.judet, l.oras, l.strada
+--FROM magazin m, locatie l
+--WHERE m.cod_locatie = l.cod_locatie
+--UNION
+--SELECT d.nume, d.cod_locatie, l.judet, l.oras, l.strada
+--FROM depozit d, locatie l
+--WHERE d.cod_locatie = l.cod_locatie
+--UNION
+--SELECT lut.nume, lut.cod_locatie, l.judet, l.oras, l.strada
+--FROM lutier lut, locatie l
+--WHERE lut.cod_locatie = l.cod_locatie
+--ORDER BY judet;
 
-SELECT m.nume, m.cod_locatie, l.judet, l.oras, l.strada
-FROM magazin m, locatie l
-WHERE m.cod_locatie = l.cod_locatie
-UNION
-SELECT d.nume, d.cod_locatie, l.judet, l.oras, l.strada
-FROM depozit d, locatie l
-WHERE d.cod_locatie = l.cod_locatie
-UNION
-SELECT lut.nume, lut.cod_locatie, l.judet, l.oras, l.strada
-FROM lutier lut, locatie l
-WHERE lut.cod_locatie = l.cod_locatie
-ORDER BY judet;
+INSERT INTO oprire(localitate) VALUES ('Bais'); 
+INSERT INTO oprire(localitate) VALUES ('Slatina'); 
+INSERT INTO oprire(localitate) VALUES ('Lehliu Gara'); 
+INSERT INTO oprire(localitate) VALUES ('Fetesti'); 
+INSERT INTO oprire(localitate) VALUES ('Medgidia');
+INSERT INTO oprire(localitate) VALUES ('Ramnicu Valcea'); 
+INSERT INTO oprire(localitate) VALUES ('Alexandria'); 
+--SELECT * FROM oprire;
+--
+--SELECT s.cod_sofer, s.nume||' '||s.prenume AS "sofer", s.categorie_carnet, d.nume AS "depozit", d.cod_locatie, l.judet, l.oras, l.strada, v.nr_inmat
+--FROM sofer s, depozit d, locatie l, vehicul v
+--WHERE d.cod_locatie = l.cod_locatie
+--AND s.cod_depozit = d.cod_depozit
+--AND v.cod_depozit = d.cod_depozit;
+--
+--SELECT * 
+--FROM depozit d, locatie l
+--WHERE d.cod_locatie = l.cod_locatie;
+--
+--SELECT s.cod_sofer, s.nume||' '||s.prenume AS "sofer", d.cod_depozit, d.nume AS "depozit", d.cod_locatie, l.judet, l.oras, l.strada
+--FROM sofer s, locatie l, depozit d
+--WHERE s.cod_depozit = d.cod_depozit
+--AND d.cod_locatie = l.cod_locatie;
 
-SELECT * FROM itinerar;
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Bais', 1, NULL); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Slatina', 1, 'aprox. 30 min.'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Slatina', 2, 'aprox. 1h'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Lehliu Gara', 3, NULL);
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Fetesti', 3, 'aprox. 30 min.'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Lehliu Gara', 4, 'in jur de doua ore'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Fetesti', 4, 'o ora'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Medgidia', 4, '2 h - 2h 30'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Ramnicu Valcea', 7, '2 ore cel mult 3'); 
-INSERT INTO oprire(localitate, cod_itinerar, durata) VALUES ('Alexandria', 9, 'in jur de 1h, 1h30'); 
-SELECT * FROM oprire;
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(1, 'AG 198 IBY', 7, '25-05-2021', 700);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(2, 'AG 198 IBY', 7, '06-06-2021', 800);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(3, 'DJ 131 ANA', 1, '30-05-2021', 930);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(4, 'DJ 131 ANA', 1, '17-06-2021', NULL);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(5, 'AG 198 IBY', 7, '28-06-2021', NULL);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(6, 'DJ 131 ANA', 7, '19-05-2021', NULL);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(7, 'IF 09 TMY', 4, '28-06-2021', NULL);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(8, 'SB 672 CMN', 5, '01-07-2021', 1200);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(9, 'SB 672 CMN', 5, '01-07-2021', 1930);
+INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, data_plecare, ora_plecare) VALUES(10, 'CT 116 MLG', 6, '01-07-2021', 2230);
+--SELECT * FROM transport;
 
-SELECT s.cod_sofer, s.nume||' '||s.prenume AS "sofer", s.categorie_carnet, d.nume AS "depozit", d.cod_locatie, l.judet, l.oras, l.strada, v.nr_inmat
-FROM sofer s, depozit d, locatie l, vehicul v
-WHERE d.cod_locatie = l.cod_locatie
-AND s.cod_depozit = d.cod_depozit
-AND v.cod_depozit = d.cod_depozit;
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (1, 'Bais', 'nu', NULL);
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (1, 'Slatina', 'nu', 'aprox. 30 min.');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (2, 'Slatina', 'nu', 'aprox. 1h');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (3, 'Lehliu Gara', 'nu', NULL);
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (3, 'Fetesti', 'nu', 'aprox. 30 min.');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (4, 'Lehliu Gara', 'nu', 'in jur de doua ore');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (4, 'Fetesti', 'nu', 'o ora');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (4, 'Medgidia', 'nu', '2 h - 2h 30');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (5, 'Ramnicu Valcea', 'nu',  '2 ore cel mult 3');
+INSERT INTO oprire_transport(cod_transport, localitate, include_vama, durata) VALUES (6, 'Alexandria', 'nu', 'in jur de 1h, 1h30');
+--SELECT * FROM oprire_transport;
 
-SELECT * 
-FROM depozit d, locatie l
-WHERE d.cod_locatie = l.cod_locatie;
-
-SELECT s.cod_sofer, s.nume||' '||s.prenume AS "sofer", d.cod_depozit, d.nume AS "depozit", d.cod_locatie, l.judet, l.oras, l.strada
-FROM sofer s, locatie l, depozit d
-WHERE s.cod_depozit = d.cod_depozit
-AND d.cod_locatie = l.cod_locatie;
-
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(1, 'AG 198 IBY', 7, 1, '25-05-2021', 700);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(2, 'AG 198 IBY', 7, 2, '06-06-2021', 800);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(3, 'DJ 131 ANA', 1, 3, '30-05-2021', 930);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(4, 'DJ 131 ANA', 1, 4, '17-06-2021', NULL);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(5, 'AG 198 IBY', 7, 7, '28-06-2021', NULL);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(6, 'DJ 131 ANA', 7, 9, '19-05-2021', NULL);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(7, 'IF 09 TMY', 4, 5, '28-06-2021', NULL);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(8, 'SB 672 CMN', 5, 6, '01-07-2021', 1200);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(9, 'SB 672 CMN', 5, 10, '01-07-2021', 1930);
-INSERT INTO transport(cod_transport, nr_inmat, cod_sofer, cod_itinerar, data_plecare, ora_plecare) VALUES(10, 'CT 116 MLG', 6, 8, '01-07-2021', 2230);
-SELECT * FROM transport;
-
-SELECT *
-FROM magazin m, locatie l
-WHERE m.cod_locatie = l.cod_locatie;
+--SELECT *
+--FROM magazin m, locatie l
+--WHERE m.cod_locatie = l.cod_locatie;
 INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(1, 1, 4);
 INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(2, 2, 4);
 INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(3, 3, 3);
@@ -337,7 +331,7 @@ INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(7, 7, 1);
 INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(8, 8, 2);
 INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(9, 9, 4);
 INSERT INTO livrare(cod_livrare, cod_transport, cod_magazin) VALUES(10, 10, 1);
-SELECT * FROM livrare;
+--SELECT * FROM livrare;
 
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_depozit, cod_magazin, cod_lutier, cod_livrare) VALUES(1, 'instrument', 'bas acustic', 1600, NULL, 'stejar', 'eBanmaltez', NULL, 4, NULL, NULL);
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_depozit, cod_magazin, cod_lutier, cod_livrare) VALUES(2, 'instrument', 'chitara el. fretless', 4400, NULL, 'artar', 'eBanmaltez', NULL, 4, NULL, NULL);
@@ -369,7 +363,7 @@ INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, 
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_depozit, cod_magazin, cod_lutier, cod_livrare) VALUES(36, 'audio', 'combo chitara 400V', 5000, 22, 'fier', 'GraySun', 3, NULL, NULL, NULL);
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_depozit, cod_magazin, cod_lutier, cod_livrare) VALUES(37, 'inregistrare/audio', 'interfata RedPumpKin', 2800, 1, 'otel', 'Mathers', 2, NULL, NULL, NULL);
 
-SELECT * FROM lutier;
+--SELECT * FROM lutier;
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_lutier) VALUES(21, 'instrument', 'bas acustic', 1600, NULL, 'stejar', 'eBanmaltez', 3);
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_lutier) VALUES(22, 'instrument', 'chitara el. fretless', 4400, NULL, 'artar', 'eBanmaltez', 2);
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_lutier) VALUES(23, 'instrument', 'bas acustic', 1600, NULL, 'stejar', 'eBanmaltez', 1);
@@ -400,15 +394,14 @@ INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, 
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_livrare) VALUES(55, 'audio', 'combo chitara 400V', 5000, 22, 'fier', 'GraySun', 6);
 INSERT INTO produs(cod_produs, tip, nume, pret, greutate, material_predominant, producator, cod_livrare) VALUES(56, 'inregistrare/audio', 'interfata RedPumpKin', 2800, 1, 'otel', 'Mathers', 6);
 
-SELECT COUNT(cod_produs)
-FROM produs;
-
-SELECT *
-FROM produs
-ORDER BY cod_produs;
+--SELECT COUNT(cod_produs)
+--FROM produs;
+--
+--SELECT *
+--FROM produs
+--ORDER BY cod_produs;
 
 
 COMMIT;
 
-SELECT * FROM itinerar;
 

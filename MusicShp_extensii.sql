@@ -48,21 +48,26 @@ BEGIN
 END;
 /
 
-SELECT cod_produs, NVL(cod_magazin, 0) cod_magazin, NVL(cod_livrare, 0) cod_livrare, nume 
-FROM produs;
-/
+SELECT cod_produs produs, NVL(cod_magazin, 0) magazin, NVL(cod_livrare, 0) livrare, nume FROM produs;
+SELECT * FROM livrare;
+
 EXECUTE sosireLivrare(1);
 /
-SELECT cod_produs, NVL(cod_magazin, 0) cod_magazin, NVL(cod_livrare, 0) cod_livrare, nume 
-FROM produs;
+
+SELECT cod_produs produs, NVL(cod_magazin, 0) magazin, NVL(cod_livrare, 0) livrare, nume FROM produs;
+SELECT * FROM LIVRARE;
 
 ROLLBACK;
 /
 
--- ex 9: Creati o procedura care primeste un pararametru de intrare codul unui depozit si are doi parametrii de iesire 
--- pentru numarul de inmatriculare al unui vehicul, respectiv codul unui sofer, ale caror depozite coincid cu cel dat de codul din primul parametru. 
--- Soferul si vehicului indicati nu vor avea un transport care sa aiba livrari neincheiate
-CREATE OR REPLACE PROCEDURE soferiVehiculeDisponibile (codDepozit IN NUMBER, codVehiculDisponibil OUT NUMBER, codSoferDisponibil OUT NUMBER) AS
+-- ex 9: Creati o procedura care primeste un pararametru de intrare pentru codul unui produs 
+-- si are un parametru de iesire pentru numele depozitului in care se afla acesta
+-- si doi parametri de iesire pentru numarul de inmatriculare al unui vehicul, respectiv codul unui sofer,
+-- ale caror depozite coincid cu cel al depozitului in care se afla produsul.
+-- Vehiculul si soferul indicati nu vor avea un transport care sa aiba livrari neincheiate.
+-- Daca produsul dat nu exista sau nu are un cod_depozit nenul sau daca nu se gaseste o pereche disponibila de vehicul si sofer,
+-- parametrii de iesire vor fi setati toti cu -1.
+CREATE OR REPLACE PROCEDURE soferiVehiculeDisponibile (codProdus IN produs.cod_produs%TYPE, numeDepozit OUT depozit.nume%TYPE, codVehiculDisponibil OUT vehicul.nr_inmat%TYPE, codSoferDisponibil OUT sofer.cod_sofer%TYPE) AS
     TYPE perecheVehiculSofer IS RECORD
     (nrInmat   vehicul.nr_inmat%TYPE,
     codSofer   sofer.cod_sofer%TYPE
@@ -82,33 +87,41 @@ BEGIN
             AND LOWER(l.status_livrare) NOT LIKE 'sosita'  -- livrare neincheiata 
             ) > 0
         )
-    SELECT DISTINCT v.nr_inmat, s.cod_sofer
-    INTO codVehiculDisponibil, codSoferDisponibil
-    FROM depozit d, vehicul v, sofer s
-    WHERE d.cod_depozit = codDepozit  -- depozitul cautat
+    SELECT DISTINCT d.nume, v.nr_inmat, s.cod_sofer
+    INTO numeDepozit, codVehiculDisponibil, codSoferDisponibil
+    FROM produs p, depozit d, vehicul v, sofer s
+    WHERE p.cod_produs = codProdus    -- produsul cautat 
+    AND d.cod_depozit = p.cod_depozit  -- join intre depozit si produs
     AND v.cod_depozit = d.cod_depozit  -- join intre vehicul si depozit 
     AND s.cod_depozit = d.cod_depozit  -- join intre sofer si depozit 
     AND v.nr_inmat NOT IN
         (SELECT v1.nr_inmat                       -- vehiculele cu transporturi neincheiate
         FROM vehicul v1, transport t
         WHERE t.nr_inmat = v.nr_inmat                           -- join intre transport si vehicul
-        AND t.cod_transport IN transporturiNeincheiate -- mulimea transporturilior cu livrari neincheiate
+        AND t.cod_transport IN 
+            (SELECT codT                              -- multimea transporturilior cu livrari neincheiate
+            FROM transporturiNeincheiate 
+            )
         )
     AND s.cod_sofer NOT IN
         (SELECT s1.cod_sofer                      -- soferii cu transporturi neincheiate
         FROM sofer s1, transport t
         WHERE t.cod_sofer = s1.cod_sofer                      -- join intre transport si sofer
-        AND t.cod_transport IN transporturiNeincheiate -- mulimea transporturilior cu livrari neincheiate
+        AND t.cod_transport IN 
+            (SELECT codT                              -- multimea transporturilior cu livrari neincheiate
+            FROM transporturiNeincheiate 
+            )
         );
     
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
-            DBMS_OUTPUT.PUT_LINE('soferiVehiculeDisponibile: Nu am gasit perechi disponibile de soferi si vehicule pentru depozitul cu codul ' || codDepozit);
+            DBMS_OUTPUT.PUT_LINE('soferiVehiculeDisponibile: Nu am gasit perechi disponibile de vehicule si soferi pentru produsul cu codul ' || codProdus || ' sau cod_depozit este NULL sau produsul dat nu exista.' );
+            numeDepozit := -1;
             codVehiculDisponibil := -1;
             codSoferDisponibil:= -1;
             
         WHEN TOO_MANY_ROWS THEN
-            DBMS_OUTPUT.PUT_LINE('soferiVehiculeDisponibile: S-au gasit mai multe perechi disponibile de soferi si vehicule pentru depozitull cu codul '|| codDepozit);
+            DBMS_OUTPUT.PUT_LINE('soferiVehiculeDisponibile: S-au gasit mai multe perechi disponibile de vehicule si soferi pentru  produsul cu codul ' || codProdus);
             WITH transporturiNeincheiate AS 
             (SELECT t.cod_transport codT
             FROM transport t
@@ -120,43 +133,81 @@ BEGIN
                 ) > 0
             )
             SELECT DISTINCT v.nr_inmat, s.cod_sofer
-            INTO codVehiculDisponibil, codSoferDisponibil
-            FROM depozit d, vehicul v, sofer s
-            WHERE d.cod_depozit = codDepozit  -- depozitul cautat
+            BULK COLLECT INTO perechiDisponibile
+            FROM produs p, depozit d, vehicul v, sofer s
+            WHERE p.cod_produs = codProdus    -- produsul cautat 
+            AND d.cod_depozit = p.cod_depozit  -- join intre depozit si produs
             AND v.cod_depozit = d.cod_depozit  -- join intre vehicul si depozit 
             AND s.cod_depozit = d.cod_depozit  -- join intre sofer si depozit 
             AND v.nr_inmat NOT IN
                 (SELECT v1.nr_inmat                       -- vehiculele cu transporturi neincheiate
                 FROM vehicul v1, transport t
                 WHERE t.nr_inmat = v.nr_inmat                           -- join intre transport si vehicul
-                AND t.cod_transport IN transporturiNeincheiate -- mulimea transporturilior cu livrari neincheiate
+                AND t.cod_transport IN 
+                    (SELECT codT                              -- multimea transporturilior cu livrari neincheiate
+                    FROM transporturiNeincheiate 
+                    )
                 )
             AND s.cod_sofer NOT IN
                 (SELECT s1.cod_sofer                      -- soferii cu transporturi neincheiate
                 FROM sofer s1, transport t
                 WHERE t.cod_sofer = s1.cod_sofer                      -- join intre transport si sofer
-                AND t.cod_transport IN transporturiNeincheiate -- mulimea transporturilior cu livrari neincheiate
+                AND t.cod_transport IN 
+                    (SELECT codT                              -- multimea transporturilior cu livrari neincheiate
+                    FROM transporturiNeincheiate 
+                    )
                 );
             codVehiculDisponibil := perechiDisponibile(1).nrInmat;
             codSoferDisponibil:= perechiDisponibile(1).codSofer;
             
+            SELECT d.nume
+            INTO numeDepozit
+            FROM depozit d, sofer s
+            WHERE s.cod_sofer = codSoferDisponibil -- soferul gasit
+            AND d.cod_depozit = s.cod_depozit;         -- join intre depozit si sofer
+            
         WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('soferiVehiculeDisponibile: Alta exceptie pentru depozitul cu codul ' || codDepozit);
+            DBMS_OUTPUT.PUT_LINE('soferiVehiculeDisponibile: Alta exceptie pentru  produsul cu codul ' || codProdus);
 END;
 /
+
+SELECT cod_produs produs, cod_depozit depozit FROM produs;
 
 DECLARE 
+    TYPE coduriProduse IS VARRAY(5) OF produs.cod_produs%TYPE;
+
+    varrayCoduriProduse   coduriProduse:=coduriProduse();
     codV   vehicul.nr_inmat%TYPE;
     codS   sofer.cod_sofer%TYPE;
+    numeD   depozit.nume%TYPE;
 BEGIN
-    soferiVehiculeDisponibile(1, codV, codS);
+    FOR i IN 1..5 LOOP
+        varrayCoduriProduse.extend();
+    END LOOP;
+    varrayCoduriProduse(1) := 14;
+    varrayCoduriProduse(2) := 15;
+    varrayCoduriProduse(3) := 35;
+    varrayCoduriProduse(4) := 36;
+    varrayCoduriProduse(5) := 37;
 
-    DBMS_OUTPUT.PUT_LINE('cod vehicul disponibil: ' || codV);
-    DBMS_OUTPUT.PUT_LINE('cod sofer disponibil: ' || codS);
+    FOR i IN varrayCoduriProduse.FIRST..varrayCoduriProduse.LAST LOOP
+        soferiVehiculeDisponibile(varrayCoduriProduse(i), numeD, codV, codS);
+    
+        IF codS >= 0 
+            THEN
+                DBMS_OUTPUT.PUT_LINE('Pentru produsul cu codul ' || varrayCoduriProduse(i) || ': ');
+                DBMS_OUTPUT.PUT_LINE('   nume depozit: ' || numeD);
+                DBMS_OUTPUT.PUT_LINE('   nr inmat vehicul disponibil: ' || codV);
+                DBMS_OUTPUT.PUT_LINE('   cod sofer disponibil: ' || codS);
+                DBMS_OUTPUT.NEW_LINE();
+            ELSE
+                DBMS_OUTPUT.NEW_LINE();
+        END IF;
+    END LOOP;
 END;
 /
 
--- ex 6: Creati o procedura care primeste ca parametru de intrare un tabel indexat cu livrari si are parametrii de iesire tabele imbricate 
+-- ex 6: Creati o procedura care primeste ca parametru de intrare un tabel indexat cu livrari si are parametrii de iesire doua tabele imbricate 
 -- in care vor fi introduse codurile vehiculelor, respectiv soferilor care se ocupa de transporturile incheiate (ale caror ultime livrari au sosit acum). 
 -- Modificati si livrarile de actualizat folosind procedura sosireLivrare (de la ex 7).
 CREATE OR REPLACE TYPE varrayCoduriLivrari IS VARRAY(100) OF NUMBER(10);
@@ -213,7 +264,7 @@ END;
 
 SELECT * FROM livrare;
 SELECT * FROM transport;
-select * from itinerar;
+SELECT cod_produs produs, cod_livrare livrare, cod_magazin magazin FROM produs;
 
 DECLARE
     coduriLivrari  varrayCoduriLivrari := varrayCoduriLivrari();
@@ -241,9 +292,11 @@ BEGIN
     DBMS_OUTPUT.NEW_LINE;
 END;
 /
-ROLLBACK;
 
-select * from locatie;
+SELECT * FROM livrare;
+SELECT cod_produs produs, cod_livrare livrare, cod_magazin magazin FROM produs;
+
+ROLLBACK;
 
 -- ex 8: Creati o functie ce primeste ca parametru de intrare codul unui produs si returneaza codul unui lutier 
 -- aflat in acelasi judet in care se gaseste magazinul in care sta produsul dat. Daca produsul nu se afla intr-un magazin 
@@ -300,14 +353,31 @@ FROM lutier lut, locatie loc
 WHERE loc.cod_locatie = lut.cod_locatie;
 
 DECLARE
+    TYPE coduriLutieri IS VARRAY(4) OF  lutier.cod_lutier%TYPE;
+    varrayCoduriLutieri   coduriLutieri:=coduriLutieri();
+
     codLutierLocal   lutier.cod_lutier%TYPE;
 BEGIN
-    codLutierLocal := lutierLocal(10);  -- vezi pt codurile de produse: 10, 11, 13
-    IF codLutierLocal > -1
-        THEN
-            DBMS_OUTPUT.PUT_LINE('Codul unui lutier din judet: ' || codLutierLocal);
-        ELSE 
-            DBMS_OUTPUT.PUT_LINE('Eroare intampinata. Vedeti detalii mai sus');
-    END IF;
+    varrayCoduriLutieri.extend();
+    varrayCoduriLutieri.extend();
+    varrayCoduriLutieri.extend();
+    varrayCoduriLutieri.extend();
+    varrayCoduriLutieri(1):= 10;   -- un lutier in judet
+    varrayCoduriLutieri(2):= 11;   -- mai multi lutieri in judet (too many rows)
+    varrayCoduriLutieri(3):= 13;   -- niciun lutier in judet (no data found) 
+    varrayCoduriLutieri(4):= 15;   -- cod magazin null (no data found)
+    
+    FOR i IN varrayCoduriLutieri.FIRST..varrayCoduriLutieri.LAST LOOP
+        codLutierLocal := lutierLocal(varrayCoduriLutieri(i));  -- vezi pt codurile de produse: 10, 11, 13
+        
+        IF codLutierLocal > -1
+            THEN
+                DBMS_OUTPUT.PUT_LINE('Pentru produsul cu codul ' || varrayCoduriLutieri(i) || ', codul unui lutier din judet: ' || codLutierLocal);
+            ELSE 
+                DBMS_OUTPUT.PUT_LINE('Pentru produsul cu codul ' || varrayCoduriLutieri(i) || ', eroare intampinata! Vedeti detalii mai sus');
+        END IF;
+        DBMS_OUTPUT.NEW_LINE();
+    END LOOP;
 END;
+
 
