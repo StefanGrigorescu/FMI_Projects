@@ -1,0 +1,4 @@
+﻿  GeneticAlgs.cpp
+C:\Users\Stefan\source\repos\GeneticAlgs\Chromosome.h(381,20): warning C4244: '=': conversion from 'double' to 'size_t', possible loss of data
+C:\Users\Stefan\source\repos\GeneticAlgs\Chromosome.h(475,28): warning C4804: '~': unsafe use of type 'bool' in operation
+  GeneticAlgs.vcxproj -> C:\Users\Stefan\source\repos\GeneticAlgs\Debug\GeneticAlgs.exe
