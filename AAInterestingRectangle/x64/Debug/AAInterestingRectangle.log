@@ -1,0 +1,8 @@
+﻿  AAInterestingRectangle.cpp
+C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\AAInterestingRectangle.cpp(94,36): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\AAInterestingRectangle.cpp(293,32): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\AAInterestingRectangle.cpp(315,28): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\AAInterestingRectangle.cpp(321,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\AAInterestingRectangle.cpp(339,8): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\AAInterestingRectangle.cpp(350,8): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  AAInterestingRectangle.vcxproj -> C:\Users\Stefan\OneDrive\Projects\Visual Studio Projects\AAInterestingRectangle\x64\Debug\AAInterestingRectangle.exe
