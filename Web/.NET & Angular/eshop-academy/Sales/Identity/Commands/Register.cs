@@ -1,0 +1,4 @@
+﻿namespace Sales.Identity.Commands
+{
+
+}
