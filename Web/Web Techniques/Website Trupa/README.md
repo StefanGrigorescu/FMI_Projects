@@ -1,4 +1,4 @@
-# Web - Proiect website trupa
+# Web - Proiect Website Trupa
 
 Teme
 1. HTML 
