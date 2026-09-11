@@ -1,0 +1,38 @@
+server:
+    port: 8083
+
+spring:
+    application:
+        name: sound-equip-api-service
+
+    datasource:
+        url: jdbc:h2:file:~/soundequip/SoundEquipH2Db;DATABASE_TO_UPPER=false
+        username: sa
+        password: kepo&friends
+        driverClassName: org.h2.Driver
+    jpa:
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.H2Dialect
+                format_sql: true
+                connection:
+                    characterEncoding: UTF-8
+                    CharSet: UTF-8
+                    useUnicode: true
+        show-sql: true
+        hibernate:
+          ddl-auto: update
+        defer-datasource-initialization: true
+    mvc:
+        pathmatch:
+            matching-strategy:
+                ant-path-matcher
+
+logging:
+    level:
+        root: info
+        io:
+            javabrains: trace
+    pattern:
+        file: '%d{yyyy-MM-dd HH:mm:ss} %marker %-5level - %msg%n'
+    file.path: logs

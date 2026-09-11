@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Font?>
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.eastwoodjtb.controllers.HomeController"
+            prefHeight="400.0" prefWidth="600.0">
+    <TabPane layoutX="17.0" layoutY="126.0" prefHeight="622.0" prefWidth="922.0" tabClosingPolicy="UNAVAILABLE">
+        <Tab id="tab-product" text="Products">
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="576.0" prefWidth="922.0"/>
+        </Tab>
+        <Tab id="tab-subsidiary" text="Subsidiaries">
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0"/>
+        </Tab>
+        <Tab text="Settings">
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0"/>
+        </Tab>
+    </TabPane>
+    <Label layoutX="129.0" layoutY="23.0" text="Welcome to Kepo Depo!" textFill="#ccccff">
+        <font>
+            <Font name="Comic Sans MS Bold" size="48.0"/>
+        </font>
+    </Label>
+    <Button id="btn_logout_home" layoutX="854.0" layoutY="75.0" mnemonicParsing="false" prefHeight="30.0"
+            prefWidth="74.0" style="-fx-background-color: #EBDEF0; -fx-border-width: 1px; -fx-border-color: #2C3E50;"
+            text="Logout">
+        <font>
+            <Font name="Constantia Bold" size="14.0"/>
+        </font>
+    </Button>
+    <Label id="lbl_username_home" layoutX="735.0" layoutY="16.0" text="username: ">
+        <font>
+            <Font name="Constantia Bold" size="12.0"/>
+        </font>
+    </Label>
+    <Label id="lbl_ftp_username_home" layoutX="735.0" layoutY="40.0" text="ftp username: ">
+        <font>
+            <Font name="Constantia Bold" size="12.0"/>
+        </font>
+    </Label>
+</AnchorPane>
