@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32228.343
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "ReteleT2", "ReteleT2.pyproj", "{0FC9F70D-2CE8-408A-A806-28A6E0AEB429}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0FC9F70D-2CE8-408A-A806-28A6E0AEB429}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FC9F70D-2CE8-408A-A806-28A6E0AEB429}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D6C0F8BC-AC83-42E3-8F22-26DED4A0D925}
+	EndGlobalSection
+EndGlobal
