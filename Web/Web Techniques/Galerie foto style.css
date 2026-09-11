@@ -1,0 +1,394 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap');
+
+/* @import url('https://fonts.gstatic.com/s/sourcesanspro/v14/6xK3dSBYKcSV-LCoeQqfX1RYOo3qNq7lqDY.woff2'); */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    background-color: none;
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+html,
+body {
+    background-image: url("./poze/Zid.png");
+    background-color: #3650e5;
+    background-repeat: repeat;
+    height: 100%;
+    width: 100%;
+    background-size: cover;
+    overflow: scroll;
+}
+
+.footer {
+    margin: 5% 5% 5% 5%;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 82%;
+    display: grid;
+    grid-template-columns: 50% repeat(5, 10%);
+    grid-gap: 1.2vw;
+    background-color: none;
+}
+
+.buton {
+    background-image: url("./poze/buton lemn.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 3.6vw;
+    border-radius: 37%;
+    font-size: 1.5vw;
+    overflow: hidden;
+    opacity: 0.6;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 2px 2px 5px;
+    vertical-align: middle;
+}
+
+.buton:hover {
+    opacity: 1;
+    transform: skew(-7deg);
+}
+
+.buton div {
+    color: #3650e5;
+}
+
+#Acasa {
+    grid-column-start: 6;
+    grid-column-end: 7;
+}
+
+#galerie {
+    position: static;
+    margin: 18%, 5%, 30%, 15%;
+    background-image: none;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.galerie-item {
+    background-image: url("./poze/fereastra_inchisa_galerie.png");
+    background-size: contain;
+    background-repeat: repeat;
+    height: 480px;
+    width: 576px;
+    display: flex;
+    justify-content: center;
+}
+
+.galerie-item:hover {
+    background-image: url("./poze/fereastra_deschisa2_galerie.png");
+    transition: background-image 250ms;
+}
+
+.galerie-item:hover .galerie-s {
+    margin: 19.5% 1.7% 0px 0px;
+    background-image: none;
+    background-color: #000000;
+    /*background-color: #ff6a00;*/
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 40.5%;
+    height: 54.7%;
+}
+
+img {
+    display: none;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.galerie-item:hover img {
+    display: block;
+}
+
+.input-field {
+    /* omologul sau din PaginaTrupei.css este caseta-log*/
+    background-image: url("./poze/buton lemn.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    margin: 1% 3% 5% 10%;
+    width: 90%;
+    height: 10%;
+    border-radius: 20%;
+    opacity: 0.8;
+    font-size: 1.7vw;
+    text-align: center;
+    overflow: hidden;
+    text-align: center;
+    text-shadow: 0.5px 0.5px 1px;
+}
+
+#Modificare {
+    position: fixed;
+    background-image: url("./poze/tablou_parc.png");
+    background-size: 20vw;
+    background-repeat: no-repeat;
+    margin-top: 2%;
+    margin-left: 96%;
+    transition: margin-left 900ms;
+    width: 20vw;
+    height: auto;
+    box-shadow: 0px 0px 5px #9a7d69;
+}
+
+#Modificare:hover {
+    margin-left: 78.9%;
+    transition: margin-left 900ms;
+}
+
+#Adaugare {
+    position: fixed;
+    background-image: url("./poze/tablou_parc.png");
+    background-size: 20vw;
+    background-repeat: no-repeat;
+    margin-top: 20%;
+    margin-left: 96%;
+    transition: margin-left 900ms;
+    width: 20vw;
+    height: auto;
+    box-shadow: 0px 0px 5px #9a7d69;
+}
+
+#Adaugare:hover {
+    margin-left: 78.9%;
+    transition: margin-left 900ms;
+}
+
+#item1:hover #s1 {
+    margin: 20% 0% 0% 0%;
+}
+
+#item2:hover #s2 {
+    margin: 0% 0% 0% 0.9%;
+}
+
+#item3:hover #s3 {
+    margin: 3% 0% 0% 0.05%;
+}
+
+#item4:hover #s4 {
+    margin: 22.5% 0% 0% 0.05%;
+}
+
+#item5:hover #s5 {
+    margin: 22.5% 0% 0% 0.05%;
+}
+
+#item6:hover #s6 {
+    margin: 22.5% 0% 0% 0.05%;
+}
+
+#item7:hover #s7 {
+    margin: 23% 0% 0% 0.05%;
+}
+
+#item8:hover #s8 {
+    margin: 0% 0% 0% 12%;
+}
+
+#item9:hover #s9 {
+    margin: 0% 0% 0% 18.5%;
+}
+
+#item10:hover #s10 {
+    margin: 0% 0% 0% 9%;
+}
+
+#item11:hover #s11 {
+    margin: 22.5% 0% 0% 0.05%;
+}
+
+#item12:hover #s12 {
+    margin: 22.5% 0% 0% 0.05%;
+}
+
+#item13:hover #s13 {
+    margin: 22.5% 0% 0% 0.05%;
+}
+
+#item14:hover #s14 {
+    margin: 0% 0% 0% 22%;
+}
+
+#item15:hover #s15 {
+    margin: 0% 0% 0% 18%;
+    max-width: 101%;
+    max-height: 101%;
+}
+
+#item16:hover #s16 {
+    margin: 6% 0% 0% 0%;
+}
+
+#item17:hover #s17 {
+    margin: 0% 0% 0% 22%;
+}
+
+#item18:hover #s18 {
+    margin: 18% 0% 0% 0%;
+}
+
+@media (max-width: 1280px) {
+    .footer {
+        margin: 5% 5% 5% 3%;
+        display: grid;
+        grid-template-columns: 30% repeat(5, 14%);
+        grid-gap: 1.8vw;
+    }
+    .buton {
+        height: 6vw;
+        border-radius: 37%;
+        opacity: 0.7;
+        border-top: 0.1vw groove #150f0b;
+        border-bottom: 0.3vw groove #150f0b;
+        border-right: 0.3vw groove #150f0b;
+        box-shadow: 1vw #9a7d69;
+        font-size: 2.4vw;
+        text-shadow: 1.5px 1.5px 5px, 2px 2px 10px #000524;
+    }
+    .buton:hover {
+        text-shadow: 2px 2px 5px, 2px 2px 10px #000524;
+    }
+}
+
+@media (max-width: 768px) {
+    #galerie {
+        position: static;
+        margin: 0%, 0%, 0%, 0%;
+        height: 100%;
+        width: 100%;
+    }
+    .footer {
+        margin: 0% 5% 15% 3%;
+        display: grid;
+        grid-template-columns: 0% 4% repeat(4, 19%) 6%;
+        grid-gap: 1.8vw;
+    }
+    .buton {
+        height: 8vw;
+        opacity: 0.8;
+        font-size: 3vw;
+    }
+    .galerie-item {
+        /*position: relative;*/
+        height: 60vw;
+        width: 70vw;
+    }
+    /*.galerie-item:hover .galerie-s {
+        position: absolute;
+        top: 12.5vw;
+        margin: 0px 0px 0px 0px;
+        height: 55%;
+        width: 42.14%;
+        margin: 72000px 0 0 0;
+        background-size: auto;
+        width: 100%;
+        height: 2%;      
+         
+            Aici am o dificultate, anume ca orice  valori as da pentru height, width si margin,
+            sectiunile (de clasa "galerie-s") din galerie nu se redimensioneaza,
+            de aceea nu au o mica deviatie (constanta) dupa un prag de micsorare al screen width-ului.
+            Se poate vedea decomentand background colorul din linia 91.
+            Am incercat in multe feluri sa rezolv, dar nu se schimba nimic.
+            Ma poti ajuta cu o idee? Poate imi scapa ceva. 
+            Mersi!
+        
+    }*/
+    #item1:hover #s1 {
+        margin: 20% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item2:hover #s2 {
+        margin: 0.5% 0% 0% 0.9%;
+        max-width: 103.5%;
+        max-height: 103.5%;
+    }
+    #item3:hover #s3 {
+        margin: 3% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item4:hover #s4 {
+        margin: 22.5% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item5:hover #s5 {
+        margin: 22.5% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item6:hover #s6 {
+        margin: 22.5% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item7:hover #s7 {
+        margin: 23% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item8:hover #s8 {
+        margin: 0% 0% 0% 14%;
+        max-width: 101.4%;
+        max-height: 101.4%;
+    }
+    #item9:hover #s9 {
+        margin: 0% 0% 0% 20%;
+        max-width: 101.4%;
+        max-height: 101.4%;
+    }
+    #item10:hover #s10 {
+        margin: 0% 0% 0% 9%;
+        max-width: 101.4%;
+        max-height: 101.4%;
+    }
+    #item11:hover #s11 {
+        margin: 22.5% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item12:hover #s12 {
+        margin: 22.5% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item13:hover #s13 {
+        margin: 22.5% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+    #item14:hover #s14 {
+        margin: 0% 0% 0% 22%;
+        max-width: 101.4%;
+        max-height: 101.4%;
+    }
+    #item15:hover #s15 {
+        margin: 0% 0% 0% 19%;
+        max-width: 102%;
+        max-height: 102%;
+    }
+    #item16:hover #s16 {
+        margin: 6% 0% 0% 0.05%;
+        max-width: 104.4%;
+        max-height: 104.4%;
+    }
+    #item17:hover #s17 {
+        margin: 0% 0% 0% 23%;
+        max-width: 101%;
+        max-height: 101%;
+    }
+    #item18:hover #s18 {
+        margin: 18% 0% 0% 0.05%;
+        max-width: 104.75%;
+        max-height: 104.75%;
+    }
+}

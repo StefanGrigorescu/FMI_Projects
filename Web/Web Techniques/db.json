@@ -1,0 +1,105 @@
+{
+    "images": [{
+            "tags": [
+                "band",
+                "night",
+                "today"
+            ],
+            "name": "kempes",
+            "img": "https://image.stirileprotv.ro/media/images/800x450/Oct2016/61838061.jpg",
+            "author": "nelu",
+            "id": "00ce1946-7dd0-42b4-b8a4-c50804e84292"
+        },
+        {
+            "tags": [
+                "sitag2",
+                "Raf"
+            ],
+            "name": "chiarsinume",
+            "img": "https://i.ytimg.com/vi/y2AJbYg1kBk/maxresdefault.jpg",
+            "author": "Raf",
+            "id": "2d55aabe-f733-4668-aec6-61295b86da4f"
+        },
+        {
+            "tags": [
+                "Raf",
+                "tag34",
+                "NewTestTag"
+            ],
+            "name": "numeschimbat",
+            "img": "https://media.istockphoto.com/photos/rock-band-performs-on-stage-guitarist-bass-guitar-and-drums-picture-id666066516?k=6&m=666066516&s=170667a&w=0&h=dPYEwYobQUaCKMDy-_H36P-jKZ3KOKr8i1REeA9CADc=",
+            "author": "Raf",
+            "id": "f9a293cc-e069-434c-8d49-15ee586622c7"
+        },
+        {
+            "tags": [
+                "guitar",
+                "piano",
+                "amazing"
+            ],
+            "name": "chitaraPian!",
+            "img": "https://cdnm.petit-bebe.ro/media/catalog/product/cache/1/image/1000x1000/9df78eab33525d08d6e5fb8d27136e95/3/-/3-7272_4432.jpg",
+            "author": "Lupu",
+            "id": "5d23279a-4c86-432f-b3e3-8a1b46053076"
+        },
+        {
+            "tags": [
+                "insane",
+                "shredder"
+            ],
+            "name": "backSlash",
+            "img": "https://www.bebebrands.ro/media/catalog/product/cache/1/image/1000x1000/9df78eab33525d08d6e5fb8d27136e95/4/-/4-7273.jpg",
+            "author": "Lupu",
+            "id": "2fbd98d9-33b9-4edc-91fa-d5935e766390"
+        },
+        {
+            "tags": [
+                "#poser"
+            ],
+            "name": "Luna Amara",
+            "img": "https://static.infomusic.ro/media/2012/03/Coma-01.jpg",
+            "author": "marcel",
+            "id": "aa5c7994-2c02-481c-adf0-b6d1c05a0e68"
+        }
+    ],
+    "users": [{
+            "name": "marcel",
+            "password": "strongpa55",
+            "email": "marceldestroyer@email.com",
+            "phone": "0773420069",
+            "img": "placeholder"
+        },
+        {
+            "name": "Lupu",
+            "password": "auf",
+            "email": "",
+            "phone": "",
+            "id": "b3d02f4f-b768-4c27-8937-82a60ff379e5"
+        },
+        {
+            "name": "mr-mips",
+            "password": "li $v0 syscall",
+            "email": "afk@email.com",
+            "phone": "0211989410",
+            "id": "20e6cb85-ef56-4f70-b85b-52c924f5e368"
+        },
+        {
+            "name": "Raf",
+            "password": "random",
+            "email": "giraff@email.com",
+            "phone": "0247766553",
+            "id": "0c635959-a872-4c39-938a-94550947fb87"
+        },
+        {
+            "name": "nelu",
+            "password": "parolalui",
+            "email": "nelu@email",
+            "phone": "0234456924",
+            "id": "c813b743-07b1-4b11-8846-87e461df8b9b"
+        }
+    ],
+    "current_user": {
+        "name": "marcel",
+        "password": "strongpa55"
+    }
+}
