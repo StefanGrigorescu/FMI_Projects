@@ -260,6 +260,26 @@ build/
 vite.config.*.timestamp*
 
 # -----------------------------------------------------------------------------
+# Flutter / Dart
+# -----------------------------------------------------------------------------
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+android/.gradle/
+android/key.properties
+**/android/app/*.keystore
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/Podfile.lock
+**/.symlinks/
+# End Flutter/Dart
+
 # Misc. language / framework build outputs
 # -----------------------------------------------------------------------------
 # Maven / Gradle wrappers usually stay tracked, but generated outputs do not.
