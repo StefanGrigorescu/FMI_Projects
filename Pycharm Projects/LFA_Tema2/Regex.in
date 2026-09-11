@@ -1,0 +1,7 @@
+N = {S, A}
+Σ = {a, b, c}
+S → aS
+S → bA
+A → ε
+A → aA
+A → bbA
