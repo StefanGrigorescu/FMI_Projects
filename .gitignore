@@ -225,7 +225,7 @@ site/
 *.war
 *.ear
 *.nar
-*.zip
+# *.zip
 *.tar
 *.tar.gz
 *.tgz
